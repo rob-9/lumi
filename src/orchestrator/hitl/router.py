@@ -42,9 +42,9 @@ class HITLConfig:
         enabled: Master switch for HITL routing.
     """
 
-    hard_threshold: float = 0.3
-    soft_threshold: float = 0.5
-    auto_threshold: float = 0.7
+    hard_threshold: float = 0.5
+    soft_threshold: float = 0.75
+    auto_threshold: float = 0.75
     soft_timeout_seconds: float = 300.0  # 5 minutes
     slack_channel: str = ""
     enabled: bool = True
