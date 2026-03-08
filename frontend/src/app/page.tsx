@@ -11,7 +11,7 @@ export default function Landing() {
   const router = useRouter();
   const [sublabs, setSublabs] = useState<Record<string, SublabInfo>>({});
   const [chats, setChats] = useState<Chat[]>([]);
-  const [selectedSublab, setSelectedSublab] = useState<string | null>(null);
+  const [selectedSublab, setSelectedSublab] = useState<string | null>("dynamic");
   const [query, setQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -91,7 +91,7 @@ export default function Landing() {
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-sm transition-shadow duration-300 hover:shadow-md focus-within:shadow-md focus-glow">
             {/* Specs bar */}
             <div className="flex items-center gap-1.5 px-5 pt-3.5 text-xs text-[var(--text-muted)]">
-              {["9-phase pipeline", "8 divisions", "17 agents", "Adversarial review"].map((spec, i) => (
+              {["9-phase pipeline", "119 tools", "Dynamic teams", "Adversarial review"].map((spec, i) => (
                 <span key={spec} className="flex items-center gap-1.5">
                   {i > 0 && <span className="text-[var(--border)]">&middot;</span>}
                   <span>{spec}</span>
@@ -131,6 +131,19 @@ export default function Landing() {
 
           {/* Sublab chips */}
           <div className="mt-5 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            {/* Dynamic SubLab — always available */}
+            <button
+              onClick={() => setSelectedSublab(selectedSublab === "dynamic" ? null : "dynamic")}
+              className={clsx(
+                "shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] animate-slide-up",
+                selectedSublab === "dynamic"
+                  ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent-dark)] shadow-sm"
+                  : "border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-hover)]"
+              )}
+              style={{ animationDelay: "300ms" }}
+            >
+              Dynamic
+            </button>
             {Object.entries(sublabs).map(([id, info], i) => (
               <button
                 key={id}
@@ -141,7 +154,7 @@ export default function Landing() {
                     ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent-dark)] shadow-sm"
                     : "border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-hover)]"
                 )}
-                style={{ animationDelay: `${300 + i * 60}ms` }}
+                style={{ animationDelay: `${360 + i * 60}ms` }}
               >
                 {info.name}
               </button>
@@ -149,8 +162,34 @@ export default function Landing() {
             <ChevronRight size={16} className="shrink-0 self-center text-[var(--text-muted)] animate-fade-in" style={{ animationDelay: "600ms" }} />
           </div>
 
+          {/* Dynamic sublab examples */}
+          {selectedSublab === "dynamic" && (
+            <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] overflow-hidden animate-scale-in shadow-sm">
+              <div className="px-4 py-2.5 border-b border-[var(--border)]">
+                <p className="text-xs font-medium text-[var(--text)]">Dynamic</p>
+                <p className="text-[11px] text-[var(--text-muted)] mt-0.5">AI composes a custom agent team from all 119 tools based on your query</p>
+              </div>
+              <div className="py-1">
+                {[
+                  "Assess whether repurposing GLP-1 receptor agonists (e.g., semaglutide) could slow neurodegeneration in early-stage Parkinson's disease. Map the GLP-1R neuroprotective signaling pathway and evaluate the available clinical and genetic evidence.",
+                  "Evaluate PCSK9 as a cardiovascular target using multi-omic evidence",
+                  "Design a selective KRAS G12C inhibitor with optimized PK properties",
+                ].map((example, i) => (
+                  <button
+                    key={i}
+                    onClick={() => selectExample("dynamic", example)}
+                    className="w-full px-4 py-2.5 text-left text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--accent-light)] hover:text-[var(--accent-dark)] hover:pl-5 animate-fade-in"
+                    style={{ animationDelay: `${i * 50}ms` }}
+                  >
+                    {example.length > 100 ? example.slice(0, 100) + "..." : example}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Expanded sublab examples */}
-          {selectedSublab && sublabs[selectedSublab] && (
+          {selectedSublab && selectedSublab !== "dynamic" && sublabs[selectedSublab] && (
             <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] overflow-hidden animate-scale-in shadow-sm">
               <div className="px-4 py-2.5 border-b border-[var(--border)]">
                 <p className="text-xs font-medium text-[var(--text)]">

@@ -17,11 +17,16 @@ export function AgentTraceCard({ trace, index = 0 }: Props) {
   const isRunning = trace.status === "running";
   const isError = trace.status === "error";
 
+  // Auto-expand running traces so tool calls are visible as they stream in
+  useEffect(() => {
+    if (trace.status === "running") setOpen(true);
+  }, [trace.status]);
+
   useEffect(() => {
     if (open && contentRef.current) {
       setContentHeight(contentRef.current.scrollHeight);
     }
-  }, [open, trace.tools_called]);
+  }, [open, trace.tools_called, trace.tools_called.length]);
 
   return (
     <div

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { api } from "@/lib/api";
 import type { AgentInfo, AgentTrace } from "@/lib/types";
 import { Loader2, CheckCircle2 } from "lucide-react";
@@ -15,13 +15,35 @@ export function AgentsPanel({ sublab, liveTraces }: Props) {
   const [agents, setAgents] = useState<AgentInfo[]>([]);
 
   useEffect(() => {
-    api.getSublabAgents(sublab).then(setAgents);
+    // Don't fetch static agent list for dynamic sublab — agents come from live traces
+    if (sublab !== "dynamic") {
+      api.getSublabAgents(sublab).then(setAgents);
+    }
   }, [sublab]);
+
+  // For dynamic sublab, derive agent list from live traces
+  const displayAgents = useMemo<AgentInfo[]>(() => {
+    if (sublab === "dynamic" && liveTraces.length > 0) {
+      const seen = new Set<string>();
+      return liveTraces
+        .filter((t) => {
+          if (seen.has(t.agent_id)) return false;
+          seen.add(t.agent_id);
+          return true;
+        })
+        .map((t) => ({
+          id: t.agent_id,
+          division: t.division || "Dynamic SubLab",
+          status: t.status === "complete" ? "complete" : t.status === "running" ? "running" : "available",
+          sublabs: ["Dynamic"],
+        }));
+    }
+    return agents;
+  }, [sublab, liveTraces, agents]);
 
   const liveMap = new Map(liveTraces.map((t) => [t.agent_id, t]));
 
-  // Group by division
-  const byDivision = agents.reduce<Record<string, AgentInfo[]>>((acc, agent) => {
+  const byDivision = displayAgents.reduce<Record<string, AgentInfo[]>>((acc, agent) => {
     (acc[agent.division] ??= []).push(agent);
     return acc;
   }, {});
@@ -52,7 +74,6 @@ export function AgentsPanel({ sublab, liveTraces }: Props) {
                   )}
                   style={{ animationDelay: `${idx * 50}ms` }}
                 >
-                  {/* Status indicator */}
                   {live?.status === "running" ? (
                     <Loader2 size={12} className="shrink-0 text-[var(--orange)] animate-spin" />
                   ) : live?.status === "complete" ? (
@@ -75,11 +96,18 @@ export function AgentsPanel({ sublab, liveTraces }: Props) {
         </div>
       ))}
 
-      {agents.length === 0 && (
+      {displayAgents.length === 0 && sublab !== "dynamic" && (
         <div className="space-y-2 py-2">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-8 rounded-lg shimmer" />
           ))}
+        </div>
+      )}
+
+      {sublab === "dynamic" && liveTraces.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-8 text-center animate-fade-in">
+          <p className="text-xs text-[var(--text-muted)]">Dynamic team composition</p>
+          <p className="text-[10px] text-[var(--text-muted)] mt-1">Agents will be assigned at runtime</p>
         </div>
       )}
     </div>
