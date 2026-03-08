@@ -43,8 +43,8 @@ class HITLConfig:
     """
 
     hard_threshold: float = 0.75
-    soft_threshold: float = 0.90
-    auto_threshold: float = 0.90
+    soft_threshold: float = 0.85
+    auto_threshold: float = 0.85
     soft_timeout_seconds: float = 300.0  # 5 minutes
     slack_channel: str = ""
     enabled: bool = True
