@@ -119,11 +119,13 @@ class BiosecurityEngine:
             ]
             if isinstance(result, Exception):
                 logger.error("Biosecurity screen %s failed: %s", screen_names[i], result)
+                # FAIL-CONSERVATIVE: a crashed screen is treated as a flag, not a pass.
+                # For biosecurity, false negatives are unacceptable.
                 screen_results.append(BiosecurityScreenResult(
                     screen_name=screen_names[i],
-                    passed=True,  # fail-open with warning
-                    risk_level=RiskCategory.YELLOW,
-                    details=f"Screen failed with error: {result}",
+                    passed=False,
+                    risk_level=RiskCategory.ORANGE,
+                    details=f"Screen failed with error — manual review required: {result}",
                     confidence=0.0,
                 ))
             else:
@@ -182,28 +184,48 @@ class BiosecurityEngine:
                     confidence=0.3,
                 )
 
-            # Check each hit against select agent list
+            # Check each hit against select agent list AND toxin keywords
             flagged_hits: list[dict] = []
             max_identity = 0.0
+
+            # Toxin keywords to catch in hit descriptions even if organism isn't listed
+            _toxin_keywords = [
+                "toxin", "ricin", "abrin", "botulinum", "anthrax", "shiga",
+                "diphtheria", "cholera", "tetanus", "pertussis", "enterotoxin",
+                "neurotoxin", "cytotoxin", "conotoxin", "saxitoxin",
+            ]
 
             for hit in blast_result.get("hits", []):
                 organism = hit.get("organism", "").lower()
                 description = hit.get("description", "").lower()
                 identity = hit.get("identity_pct", 0.0)
 
+                matched_agent = None
+
                 # Check if organism matches any select agent
                 for agent in SELECT_AGENTS:
                     agent_lower = agent.lower()
                     if agent_lower in organism or agent_lower in description:
-                        flagged_hits.append({
-                            "organism": hit.get("organism", ""),
-                            "description": hit.get("description", ""),
-                            "identity_pct": identity,
-                            "e_value": hit.get("e_value"),
-                            "matched_agent": agent,
-                        })
-                        max_identity = max(max_identity, identity)
+                        matched_agent = agent
                         break
+
+                # Also check description for toxin keywords (catches toxins
+                # from non-listed organisms, e.g. ricin from Ricinus communis)
+                if not matched_agent:
+                    for kw in _toxin_keywords:
+                        if kw in description:
+                            matched_agent = f"toxin_keyword:{kw}"
+                            break
+
+                if matched_agent:
+                    flagged_hits.append({
+                        "organism": hit.get("organism", ""),
+                        "description": hit.get("description", ""),
+                        "identity_pct": identity,
+                        "e_value": hit.get("e_value"),
+                        "matched_agent": matched_agent,
+                    })
+                    max_identity = max(max_identity, identity)
 
             if not flagged_hits:
                 return BiosecurityScreenResult(
@@ -394,26 +416,45 @@ class BiosecurityEngine:
         clean_seq = sequence.upper()
         suspicious_motifs: list[dict] = []
 
-        # Ricin A-chain active site motif (approximate)
-        if re.search(r"E.{3,5}[AG].{2}R.{3,5}E", clean_seq):
-            suspicious_motifs.append({
-                "motif": "Ricin-A-like active site",
-                "description": "Matches ricin A-chain catalytic motif pattern",
-            })
+        # Each motif has a specificity rating to reduce false positives
+        _motif_checks = [
+            # Ricin A-chain N-glycosidase active site (depurinates rRNA)
+            (r"E.{3,5}[AG].{2}R.{3,5}E", "Ricin-A-like active site",
+             "Matches ricin A-chain catalytic motif (ribosome-inactivating protein)", "high"),
+            # ADP-ribosyltransferase catalytic motif (diphtheria, cholera, pertussis toxins)
+            (r"[YF].{1,2}STS.{5,15}E", "ADP-ribosyltransferase",
+             "Catalytic region of ADP-ribosylating toxins (diphtheria/cholera/pertussis family)", "high"),
+            # Zinc-metalloprotease — specific to toxin-length context (>400 aa)
+            (r"HE..H.{15,25}E", "Extended zinc-metalloprotease (HEXXH...E)",
+             "Extended HEXXH motif with downstream Glu, found in botulinum/tetanus neurotoxins", "high"),
+            # Cholera toxin B pentamer binding motif
+            (r"C.{4,8}C.{4,8}C.{4,8}C", "Cysteine-rich repeat",
+             "Multiple Cys-Cys repeats consistent with AB5 toxin B-subunit fold", "medium"),
+            # Anthrax toxin protective antigen (PA) furin cleavage site
+            (r"R.{0,1}[RK].{0,2}R", "Furin cleavage site (RxxR)",
+             "Polybasic furin cleavage motif used by anthrax PA and many viral proteins", "medium"),
+            # Shiga toxin A-subunit catalytic signature
+            (r"E.{2,4}R.{2,4}[DE].{10,30}R.{3,6}W", "Shiga toxin A-like",
+             "Matches Shiga/Shiga-like toxin A-subunit catalytic region", "high"),
+            # Staphylococcal enterotoxin superantigen β-grasp motif
+            (r"Y.{10,20}[KR].{3,6}[DE].{5,10}N", "Superantigen-like",
+             "β-grasp fold motif found in staphylococcal superantigens", "medium"),
+            # Pore-forming toxin transmembrane hairpin
+            (r"[ILVM]{4,6}.{2,5}[ILVM]{4,6}", "Pore-forming hairpin",
+             "Alternating hydrophobic stretches consistent with pore-forming toxin insertion domain", "low"),
+        ]
 
-        # ADP-ribosyltransferase motif (diphtheria/cholera/pertussis toxins)
-        if re.search(r"[YF].{1,2}STS", clean_seq):
-            suspicious_motifs.append({
-                "motif": "ADP-ribosyltransferase-like",
-                "description": "Matches ADP-ribosyltransferase catalytic region",
-            })
-
-        # Botulinum neurotoxin zinc-binding motif
-        if re.search(r"HE..H", clean_seq):
-            suspicious_motifs.append({
-                "motif": "Zinc-metalloprotease (HEXXH)",
-                "description": "HEXXH zinc-binding motif found in metalloproteases and some neurotoxins",
-            })
+        for pattern, name, desc, specificity in _motif_checks:
+            if re.search(pattern, clean_seq):
+                # For low-specificity motifs, only flag in shorter sequences
+                # (long proteins frequently have hydrophobic stretches)
+                if specificity == "low" and len(clean_seq) > 500:
+                    continue
+                suspicious_motifs.append({
+                    "motif": name,
+                    "description": desc,
+                    "specificity": specificity,
+                })
 
         if not suspicious_motifs:
             return BiosecurityScreenResult(
@@ -424,14 +465,20 @@ class BiosecurityEngine:
                 confidence=0.4,
             )
 
+        high_specificity = [m for m in suspicious_motifs if m.get("specificity") == "high"]
+        risk = RiskCategory.RED if len(high_specificity) >= 2 else (
+            RiskCategory.ORANGE if high_specificity else RiskCategory.YELLOW
+        )
+        confidence = 0.6 if high_specificity else 0.35
+
         return BiosecurityScreenResult(
             screen_name="toxin_domain_scan",
             passed=False,
-            risk_level=RiskCategory.ORANGE,
-            details=f"Heuristic scan found {len(suspicious_motifs)} suspicious motif(s). "
-                    "Confirm with full InterPro scan.",
+            risk_level=risk,
+            details=f"Heuristic scan found {len(suspicious_motifs)} suspicious motif(s) "
+                    f"({len(high_specificity)} high-specificity). Confirm with full InterPro scan.",
             evidence=suspicious_motifs,
-            confidence=0.4,
+            confidence=confidence,
         )
 
     # ------------------------------------------------------------------
@@ -564,7 +611,7 @@ class BiosecurityEngine:
                     "that could pose dual-use risk. Focus on whether the protein could enhance "
                     "pathogen transmissibility, virulence, immune evasion, or antibiotic resistance."
                 ),
-                model="claude-haiku-4-5",
+                model="claude-haiku-4-5-20251001",
                 max_tokens=512,
                 temperature=0.1,
             )
@@ -716,17 +763,37 @@ class BiosecurityEngine:
         Aggregate individual screen results into overall risk category.
 
         Rules:
-        - RED if any screen returns RED
+        - RED if any screen with confidence >= 0.5 returns RED
+        - RED if 2+ screens return ORANGE with confidence >= 0.6
         - ORANGE if any screen returns ORANGE
-        - YELLOW if any screen returns YELLOW (but none ORANGE/RED)
-        - GREEN if all screens are GREEN
+        - YELLOW if any non-passed screen returns YELLOW
+        - GREEN if all screens are GREEN or passed
         """
-        categories = [r.risk_level for r in results]
+        # Any confident RED is an immediate veto
+        for r in results:
+            if r.risk_level == RiskCategory.RED and r.confidence >= 0.5:
+                return RiskCategory.RED
 
-        if RiskCategory.RED in categories:
-            return RiskCategory.RED
-        if RiskCategory.ORANGE in categories:
+        # Even low-confidence RED should escalate to ORANGE
+        if any(r.risk_level == RiskCategory.RED for r in results):
             return RiskCategory.ORANGE
-        if RiskCategory.YELLOW in categories:
+
+        # Multiple confident ORANGE flags escalate to RED
+        confident_orange = [
+            r for r in results
+            if r.risk_level == RiskCategory.ORANGE and r.confidence >= 0.6
+        ]
+        if len(confident_orange) >= 2:
+            return RiskCategory.RED
+
+        if any(r.risk_level == RiskCategory.ORANGE for r in results):
+            return RiskCategory.ORANGE
+
+        # YELLOW only from screens that actually flagged something (not just warnings)
+        if any(r.risk_level == RiskCategory.YELLOW and not r.passed for r in results):
             return RiskCategory.YELLOW
+
+        if any(r.risk_level == RiskCategory.YELLOW for r in results):
+            return RiskCategory.YELLOW
+
         return RiskCategory.GREEN

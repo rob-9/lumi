@@ -705,29 +705,38 @@ async def scan_toxin_domains(sequence: str) -> dict[str, Any]:
             if len(clean_seq) < 10:
                 return handle_error("scan_toxin_domains", "Sequence too short for analysis")
 
-            # Known conserved toxin motifs (simplified for MVP)
+            # Toxin motifs with specificity ratings to reduce false positives.
+            # "high" = specific to toxin families; "low" = common in benign proteins
             toxin_motifs = [
-                {"name": "Ricin A-chain active site", "pattern": r"[YF]..E...[ILVM]", "family": "Ricin/RIP"},
-                {"name": "ADP-ribosyltransferase motif", "pattern": r"[ST]T[ST]", "family": "ADP-RT toxin"},
-                {"name": "Cholera toxin family (CxC motif)", "pattern": r"C.{4,12}C.{4,12}C.{4,12}C", "family": "AB5 toxin"},
-                {"name": "Shiga-like toxin signature", "pattern": r"E[ILVM].{2,4}R.{2,4}[DE]", "family": "Shiga toxin"},
-                {"name": "Pore-forming domain (amphipathic)", "pattern": r"[ILVM]{3}.{1,3}[ILVM]{3}", "family": "Pore-forming"},
-                {"name": "Signal peptide (potential secreted toxin)", "pattern": r"^M[ILVM].{5,20}[AG][AG]", "family": "Secreted protein"},
+                {"name": "Ricin A-chain N-glycosidase", "pattern": r"E.{3,5}[AG].{2}R.{3,5}E",
+                 "family": "Ricin/RIP", "specificity": "high"},
+                {"name": "ADP-ribosyltransferase catalytic", "pattern": r"[YF].{1,2}STS.{5,15}E",
+                 "family": "ADP-RT toxin", "specificity": "high"},
+                {"name": "Shiga toxin A-subunit", "pattern": r"E.{2,4}R.{2,4}[DE].{10,30}R.{3,6}W",
+                 "family": "Shiga toxin", "specificity": "high"},
+                {"name": "Extended zinc-metalloprotease (neurotoxin)", "pattern": r"HE..H.{15,25}E",
+                 "family": "Botulinum/tetanus", "specificity": "high"},
+                {"name": "Anthrax PA furin cleavage", "pattern": r"R[RK]{1,2}.{0,2}R",
+                 "family": "Anthrax toxin", "specificity": "medium"},
+                {"name": "Cysteine-rich AB5 fold", "pattern": r"C.{4,8}C.{4,8}C.{4,8}C",
+                 "family": "AB5 toxin", "specificity": "medium"},
+                {"name": "Superantigen β-grasp", "pattern": r"Y.{10,20}[KR].{3,6}[DE].{5,10}N",
+                 "family": "Superantigen", "specificity": "medium"},
             ]
 
             for motif in toxin_motifs:
                 matches = list(re.finditer(motif["pattern"], clean_seq.upper()))
                 if matches:
-                    for m in matches[:3]:
+                    for m in matches[:2]:
                         toxin_domains_found.append({
                             "name": motif["name"],
                             "family": motif["family"],
+                            "specificity": motif.get("specificity", "medium"),
                             "position": f"{m.start() + 1}-{m.end()}",
                             "matched_sequence": m.group(),
                             "method": "heuristic_motif_scan",
                         })
 
-            # Note: heuristic motifs have high false-positive rates
             all_domains = toxin_domains_found
 
         # Risk assessment
@@ -827,13 +836,15 @@ async def screen_virulence_factors(sequence: str) -> dict[str, Any]:
         except Exception:
             pass  # BLAST failure is non-fatal; we still do heuristic analysis
 
-        # Strategy 2: Heuristic motif scanning for common virulence signatures
+        # Strategy 2: Heuristic motif scanning for virulence signatures
+        # Only include motifs with reasonable specificity (removed RGD and generic LRR
+        # which match too many benign proteins)
         virulence_motifs = [
-            {"name": "Type III secretion signal", "pattern": r"^M[^C]{0,5}[ILVM].{5,15}[PG]", "category": "secretion"},
             {"name": "LPXTG sortase anchor", "pattern": r"LP[A-Z]TG", "category": "surface_anchor"},
-            {"name": "RGD cell adhesion", "pattern": r"RGD", "category": "adhesion"},
-            {"name": "Repeat-in-toxin (RTX) motif", "pattern": r"GG[A-Z]{2}D[A-Z]{2}[A-Z]GG", "category": "rtx_toxin"},
-            {"name": "LRR (Leucine-rich repeat)", "pattern": r"L.{2}L.{2}L.{2}[IVLM]", "category": "immune_evasion"},
+            {"name": "Repeat-in-toxin (RTX) Ca2+ binding", "pattern": r"GG[A-Z]{2}D[A-Z]{2}[A-Z]GG", "category": "rtx_toxin"},
+            {"name": "Type III secretion chaperone-binding", "pattern": r"^M[^C]{0,5}[ILVM].{5,15}Q.{2,5}[ILVM]", "category": "secretion"},
+            {"name": "YopJ/AvrRxv effector motif", "pattern": r"H.{1,2}[DE].{30,60}C", "category": "t3ss_effector"},
+            {"name": "Cholesterol-binding domain (CDC)", "pattern": r"[ILVM]ECTGL[AQGS]", "category": "pore_forming"},
         ]
 
         heuristic_flags = []
