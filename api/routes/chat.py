@@ -4,13 +4,14 @@ Dynamic SubLab demo:
   1. CSO scopes query → selects dynamic SubLab mode
   2. Biosecurity pre-screen (GREEN)
   3. SubLab Planner composes team (3 agents, 2 execution groups)
-  4. HITL scope approval
-  5. Group 1 (parallel): Pharmacology & Drug Analyst + Neuro-Genomics Analyst
-  6. Group 2 (sequential): Pathway Visualization Specialist
-  7. Adversarial review panel (3-pass)
-  8. HITL flag on low-confidence clinical claim → auto-resolved
-  9. Integrations (Slack, BioRender, Benchling)
-  10. Final synthesis streamed as markdown
+  4. Group 1 (parallel): Pharmacology & Drug Analyst + Neuro-Genomics Analyst
+  5. Group 2 (sequential): Pathway Visualization Specialist
+  6. Adversarial review panel (3-pass)
+  7. HITL flag on low-confidence clinical claim → opens /review tab
+  8. Slack posts (if configured)
+  9. HITL auto-resolved after review tab conversation plays
+  10. Integrations (Slack, BioRender, Benchling)
+  11. Final synthesis streamed as markdown
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import uuid
 from datetime import datetime, timezone
 
@@ -36,6 +38,7 @@ from api.models import (
     HitlEvent,
     IntegrationEvent,
     Message,
+    ReviewDecisionRequest,
     Role,
     SendMessageRequest,
     ToolCall,
@@ -126,12 +129,111 @@ def _mock_response_text() -> str:
 
 
 # ===========================================================================
+# Mock response text — PARP + PD-L1 combination TNBC
+# ===========================================================================
+
+
+def _mock_response_text_parp() -> str:
+    return (
+        "## PARP Inhibitor + Anti-PD-L1 Combination Assessment — BRCA1-Mutant TNBC\n\n"
+        "### Executive Summary\n\n"
+        "The combination of PARP inhibition (olaparib/talazoparib) with anti-PD-L1 checkpoint blockade "
+        "(atezolizumab) represents a **mechanistically rational** strategy for BRCA1-mutant triple-negative "
+        "breast cancer. Synthetic lethality via PARP trapping in HR-deficient tumor cells is well-validated "
+        "(Bryant & Farmer, 2005), and BRCA1-mutant TNBCs exhibit elevated PD-L1 expression (45–60%) and "
+        "higher tumor mutational burden, creating a favorable immunogenic context. However, the proposed "
+        "PD-L1/PARP-trapping bispecific antibody remains **highly speculative** — no validated format exists "
+        "for antibody-conjugated PARP-trapping moieties.\n\n"
+        "---\n\n"
+        "### Dynamic SubLab Execution\n\n"
+        "- **Mode**: Dynamic SubLab (cross-domain tool mixing)\n"
+        "- **Team**: 5 agents, 3 execution groups, 14 tools across 6 domains\n"
+        "- **Biosecurity**: Pre-screen PASSED (GREEN)\n"
+        "- **Review**: 3-pass adversarial — 8/9 findings approved, 1 routed to HITL\n"
+        "- **HITL**: Bispecific antibody feasibility reviewed — approved for in silico exploration only\n\n"
+        "---\n\n"
+        "### Key Findings\n\n"
+        "| # | Finding | Agent | Confidence |\n"
+        "|---|---------|-------|------------|\n"
+        "| 1 | BRCA1 loss-of-function confers synthetic lethality with PARP inhibition via HR-deficiency | synthetic_lethality_analyst | **HIGH** 94% |\n"
+        "| 2 | Olaparib/talazoparib trap PARP1 on DNA → replication fork collapse → cell death in BRCA1⁻/⁻ | structural_biology_lead_opt | **HIGH** 92% |\n"
+        "| 3 | BRCA1-mutant TNBC shows elevated PD-L1 (45–60%) and TMB (avg 8.2 mut/Mb) | immuno_oncology_analyst | **HIGH** 88% |\n"
+        "| 4 | MEDIOLA trial: olaparib + durvalumab showed 63% DCR in BRCA-mutant breast cancer | immuno_oncology_analyst | **HIGH** 85% |\n"
+        "| 5 | PARP inhibitors upregulate PD-L1 via cGAS-STING pathway activation | synthetic_lethality_analyst | **HIGH** 82% |\n"
+        "| 6 | Combination toxicity manageable: overlapping anemia (12%) and neutropenia (8%) | toxicology_safety_profiler | **HIGH** 79% |\n"
+        "| 7 | PARP1 catalytic domain structure (PDB: 7KK5) amenable to trapping-optimized derivatives | structural_biology_lead_opt | **MED** 71% |\n"
+        "| 8 | Talazoparib shows 100x stronger PARP trapping vs olaparib in biochemical assays | structural_biology_lead_opt | **MED** 68% |\n"
+        "| 9 | PD-L1/PARP-trapping bispecific antibody feasibility *(HITL-reviewed, in silico only)* | bispecific_antibody_engineer | **LOW** 32% |\n\n"
+        "---\n\n"
+        "### Synthetic Lethality & Combination Mechanism\n\n"
+        "```\n"
+        "BRCA1 Loss → HR Deficiency → Reliance on PARP-mediated BER\n"
+        "                              ↓\n"
+        "PARP Inhibitor (Trapping) → PARP1-DNA Complex → Replication Fork Collapse → DSBs → Tumor Cell Death\n"
+        "                              ↓\n"
+        "cGAS-STING Activation → Type I IFN → PD-L1 Upregulation + Neoantigen Presentation\n"
+        "                              ↓\n"
+        "Anti-PD-L1 (Atezolizumab) → T-cell Reactivation → Immune-Mediated Killing\n"
+        "```\n\n"
+        "### PARP1 Structure & Binding\n\n"
+        "3D structure rendered via PyMOL (PDB: 7KK5). Olaparib occupies the nicotinamide-binding subsite "
+        "of the PARP1 catalytic domain (residues 662–1014). Key trapping contacts: H862 (π-stacking), "
+        "Y907 (hydrogen bond), E988 (electrostatic). Druggable pocket volume: 847 Å³.\n\n"
+        "### Risk Assessment\n\n"
+        "- **Synthetic lethality**: Strong — landmark evidence since 2005, FDA-approved PARP inhibitors in BRCA+ cancers\n"
+        "- **Combination rationale**: Strong — PARP inhibition primes immune response via STING pathway\n"
+        "- **Safety**: Moderate — manageable overlapping hematologic toxicity, immune-related AEs\n"
+        "- **Bispecific antibody**: High risk — no precedent for PARP-trapping antibody conjugate format\n"
+        "- **CMC feasibility**: High risk — dual-mechanism payload stability, manufacturing scalability unknown\n\n"
+        "### Recommended Next Steps\n\n"
+        "1. Prioritize conventional combination (olaparib + atezolizumab) for near-term clinical development\n"
+        "2. Initiate in silico modeling of PD-L1/PARP-trapping bispecific format (Rosetta, AlphaFold-Multimer)\n"
+        "3. Profile PARP-trapping moiety stability when conjugated to antibody scaffold\n"
+        "4. Evaluate talazoparib as preferred PARP component (stronger trapping, lower dose requirement)\n"
+        "5. Design Phase Ib dose-escalation for combination in BRCA1-mutant TNBC (biomarker-selected)\n\n"
+        "### Integrations\n\n"
+        "- Findings posted to **#tnbc-combination-therapy** on Slack\n"
+        "- PARP1-olaparib binding structure rendered via **PyMOL**\n"
+        "- Bispecific antibody design notebook **EXP-2026-0892** created in **Benchling**\n\n"
+        "---\n\n"
+        "*Overall confidence: **MEDIUM-HIGH** (0.74) · Cost: $4.87 · Duration: 3m 48s · 5 agents · 6 domains · Dynamic SubLab*"
+    )
+
+
+# ===========================================================================
 # Mock streaming — Dynamic SubLab pipeline
 # ===========================================================================
 
 
+async def _try_slack_post(channel: str, text: str, blocks_json: str | None = None, **kwargs) -> str | None:
+    """Post to Slack if configured. Returns thread_ts or None."""
+    try:
+        from src.mcp_servers.slack.server import slack_post_message
+        result = await slack_post_message(channel=channel, text=text, blocks_json=blocks_json, **kwargs)
+        if not result.get("error"):
+            return result.get("raw_data", {}).get("ts")
+    except Exception as exc:
+        log.debug("Slack post skipped: %s", exc)
+    return None
+
+
+async def _try_slack_reply(channel: str, thread_ts: str, text: str, **kwargs) -> str | None:
+    """Reply in Slack thread if configured. Returns ts or None."""
+    try:
+        from src.mcp_servers.slack.server import slack_post_thread_reply
+        result = await slack_post_thread_reply(channel=channel, thread_ts=thread_ts, text=text, **kwargs)
+        if not result.get("error"):
+            return result.get("raw_data", {}).get("ts")
+    except Exception as exc:
+        log.debug("Slack reply skipped: %s", exc)
+    return None
+
+
 async def _stream_mock(chat: Chat, msg_id: str):
     """Stream the GLP-1R dynamic SubLab demo with realistic timing."""
+    import os
+    slack_channel = os.environ.get("LUMI_SLACK_CHANNEL", "")
+
     all_traces: list[AgentTrace] = []
     all_hitl: list[HitlEvent] = []
     all_integrations: list[IntegrationEvent] = []
@@ -217,30 +319,6 @@ async def _stream_mock(chat: Chat, msg_id: str):
     yield _sse("trace_complete", {"trace": plan_done.model_dump()})
     all_traces.append(plan_done)
     await asyncio.sleep(1.0)
-
-    # ── HITL: Scope Approval ──
-
-    scope_hitl = {
-        "finding": (
-            "Dynamic SubLab team: 3 agents, 2 execution groups, 8 tools across 5 domains.\n\n"
-            "Group 1 (parallel):\n"
-            "• Pharmacology & Drug Analyst — get_drug_info, search_trials, get_side_effects, search_pubmed\n"
-            "• Neuro-Genomics Analyst — get_gene_info, get_gene_expression, get_pathways_for_gene, query_gwas_associations\n\n"
-            "Group 2 (depends on Group 1):\n"
-            "• Pathway Visualization Specialist — generate_pathway_diagram, generate_moa_diagram"
-        ),
-        "agent_id": "sublab_planner",
-        "confidence_score": 0.98,
-        "reason": "Confirm team composition and tool allocation before execution. Estimated cost: ~$3.20.",
-        "status": "pending",
-    }
-    yield _sse("hitl_flag", {"hitl": scope_hitl})
-    await asyncio.sleep(3.0)
-
-    scope_resolved = {**scope_hitl, "status": "approved", "reason": "Scope approved. Executing dynamic SubLab pipeline."}
-    yield _sse("hitl_resolved", {"hitl": scope_resolved})
-    all_hitl.append(HitlEvent(**scope_resolved))
-    await asyncio.sleep(1.2)
 
     # ── Phase 4: Group 1 — Parallel Data Gathering ──
 
@@ -363,22 +441,76 @@ async def _stream_mock(chat: Chat, msg_id: str):
     all_traces.append(review_done)
     await asyncio.sleep(1.0)
 
-    # ── Phase 7: HITL — Low-confidence clinical finding ──
+    # ── Phase 7: HITL — Flag low-confidence clinical claim ──
+
+    finding_id = "review_glp1r_clin_001"
+    review_channel = "#neuro-repurposing"
 
     clinical_hitl = {
         "finding": "GLP-1 receptor agonists show disease-modifying potential in Parkinson's disease, with motor score improvement in the exenatide Phase II trial (Athauda et al., 2017, n=62).",
         "agent_id": "pharmacology_drug_analyst",
         "confidence_score": 0.38,
         "reason": "Below 0.50 threshold. Single Phase II RCT (n=62), open-label extension with mixed results. No Phase III data. Exenatide-PD3 (NCT04232969) pending.",
+        "finding_id": finding_id,
         "status": "pending",
     }
     yield _sse("hitl_flag", {"hitl": clinical_hitl})
-    await asyncio.sleep(3.5)
+
+    # Post to Slack (real API call if configured)
+    thread_ts = None
+    if slack_channel:
+        thread_ts = await _try_slack_post(
+            channel=slack_channel,
+            text=(
+                "Lumi HITL Review | Confidence: 38%\n"
+                "Finding: GLP-1 receptor agonists show disease-modifying potential in PD "
+                "(Athauda et al., 2017, n=62).\n"
+                "Agent: pharmacology_drug_analyst"
+            ),
+            username="Lumi Agent",
+            icon_emoji=":microscope:",
+        )
+        if thread_ts is None:
+            yield _sse("warning", {"message": "Slack notification failed — expert may not be alerted. Check LUMI_SLACK_BOT_TOKEN."})
+
+    # Post expert conversation to Slack thread (if configured) — UI handles its own playback
+    expert_messages = [
+        ("Lumi Agent", "AI Scientist", "agent",
+         "I've flagged a clinical finding for your review. The evidence suggests GLP-1R agonists "
+         "may be disease-modifying in Parkinson's, but confidence is low (38%). The primary evidence "
+         "is a single Phase II trial with 62 participants (Athauda et al., 2017)."),
+        ("Dr. Sarah Chen", "Neuropharmacologist", "expert",
+         "The Athauda 2017 exenatide trial showed motor improvement at 60 weeks, but it was "
+         "open-label initially. What was the effect size in the placebo-controlled phase? "
+         "And are there any replication studies underway?"),
+        ("Lumi Agent", "AI Scientist", "agent",
+         "MDS-UPDRS Part 3 off-medication: exenatide -1.0 pts vs placebo +2.1 pts "
+         "(adjusted difference: -3.5, 95% CI: -6.7 to -0.3, p=0.04). No independent "
+         "replication yet, but Exenatide-PD3 Phase III (NCT04232969, n=200) is actively recruiting. "
+         "Lixisenatide and NLY01 (brain-penetrant GLP-1 agonist) Phase II trials also ongoing."),
+        ("Dr. Sarah Chen", "Neuropharmacologist", "expert",
+         "Effect size is modest but statistically significant. Given it's a single underpowered "
+         "trial, I'll approve this for inclusion with an explicit uncertainty label. The open-label "
+         "extension showed benefit persisted at 2 years, which is encouraging. Track the Phase III "
+         "for definitive evidence."),
+    ]
+    if slack_channel and thread_ts:
+        for name, title, role, text in expert_messages:
+            await _try_slack_reply(
+                channel=slack_channel,
+                thread_ts=thread_ts,
+                text=f"*{name}* ({title})\n{text}",
+                username=name,
+                icon_emoji=":microscope:" if role == "agent" else ":female-scientist:",
+            )
+
+    # Wait for review tab conversation to auto-play (~12s), then resolve
+    await asyncio.sleep(12.0)
 
     clinical_resolved = {
         **clinical_hitl,
         "status": "approved",
-        "reason": "Domain expert: Include as promising signal with explicit uncertainty. Phase II is hypothesis-generating. Track Exenatide-PD3 Phase III for definitive evidence.",
+        "reason": "Dr. Sarah Chen: Include as promising signal with explicit uncertainty label. Phase II is hypothesis-generating. Track Exenatide-PD3 Phase III for definitive evidence.",
     }
     yield _sse("hitl_resolved", {"hitl": clinical_resolved})
     all_hitl.append(HitlEvent(**clinical_resolved))
@@ -386,8 +518,20 @@ async def _stream_mock(chat: Chat, msg_id: str):
 
     # ── Phase 8: Integrations ──
 
+    # Post findings summary to Slack (real API call if configured)
+    slack_detail = "7 findings, 1 HITL-reviewed. 3 agents across 5 domains. Confidence: 0.76."
+    if slack_channel:
+        summary_ts = await _try_slack_post(
+            channel=slack_channel,
+            text=f"Lumi Pipeline Complete | GLP-1R Neuroprotection Assessment\n{slack_detail}",
+            username="Lumi",
+            icon_emoji=":dna:",
+        )
+        if summary_ts is None:
+            yield _sse("warning", {"message": "Slack summary post failed — findings were not posted to Slack."})
+
     integrations = [
-        IntegrationEvent(integration="Slack", action="Posted findings summary to #neuro-repurposing", status="complete", detail="7 findings, 1 HITL-reviewed. 3 agents across 5 domains. Confidence: 0.76."),
+        IntegrationEvent(integration="Slack", action="Posted findings summary to #neuro-repurposing", status="complete", detail=slack_detail),
         IntegrationEvent(integration="BioRender", action="Generated GLP-1R neuroprotective signaling pathway diagram", status="complete", detail="10-node cascade: GLP-1R → BDNF with PI3K/Akt and anti-inflammatory branches."),
         IntegrationEvent(integration="Benchling", action="Created notebook entry EXP-2026-0417", status="complete", detail="Linked GLP-1R repurposing dossier to PD-Neuroprotection project."),
     ]
@@ -512,6 +656,30 @@ async def clarify(chat_id: str, req: ClarifyRequest) -> ClarifyResponse:
     )
 
 
+@router.post("/{chat_id}/review/{finding_id}")
+async def submit_review_decision(chat_id: str, finding_id: str, req: ReviewDecisionRequest):
+    """Submit an expert review decision for a HITL-flagged finding."""
+    if chat_id not in _chats:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    chat = _chats[chat_id]
+
+    # Find and update the matching HITL event in stored messages
+    resolved = False
+    for msg in chat.messages:
+        for hitl in msg.hitl_events:
+            if hitl.finding_id == finding_id:
+                hitl.status = req.status
+                hitl.reason = req.feedback or hitl.reason
+                resolved = True
+                break
+
+    if not resolved:
+        raise HTTPException(status_code=404, detail="Finding not found")
+
+    log.info("review decision chat=%s finding=%s status=%s", chat_id, finding_id, req.status)
+    return {"status": "ok", "finding_id": finding_id, "decision": req.status}
+
+
 @router.get("")
 async def list_chats() -> list[Chat]:
     return sorted(_chats.values(), key=lambda c: c.updated_at, reverse=True)
@@ -571,12 +739,32 @@ async def _stream_live(chat: Chat, msg_id: str, query: str):
 
     task = asyncio.create_task(run_pipeline())
 
+    def _sse(event_type: str, data: dict) -> str:
+        data["message_id"] = msg_id
+        data["type"] = event_type
+        return f"data: {json.dumps(data, default=str)}\n\n"
+
     try:
         while True:
             item = await queue.get()
             if item is None:
                 break
             yield f"data: {json.dumps(item, default=str)}\n\n"
+
+            # Check for PyMOL image results
+            if item.get("type") == "tool_result":
+                result = item.get("data", {})
+                file_path = result.get("file_path", "")
+                if "pymol_" in file_path:
+                    filename = os.path.basename(file_path)
+                    image_url = f"/api/images/{filename}"
+                    yield _sse("integration", {"call": {
+                        "integration": "PyMOL",
+                        "action": f"Rendered {result.get('pdb_id', 'structure')}",
+                        "status": "complete",
+                        "detail": result.get("summary", "3D structure visualization"),
+                        "image_url": image_url,
+                    }})
     finally:
         if not task.done():
             task.cancel()
