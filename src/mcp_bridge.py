@@ -149,6 +149,154 @@ from src.mcp_servers.biosecurity.server import (
     check_bwc_compliance,
 )
 
+# -- cBioPortal (Cancer Genomics) --------------------------------------
+from src.mcp_servers.cbioportal.server import (
+    query_cbioportal_mutations,
+    get_cbioportal_copy_number,
+    get_cbioportal_expression,
+    get_cbioportal_survival,
+    search_cbioportal_studies,
+    get_cbioportal_gene_summary,
+)
+
+# -- QuickGO (Gene Ontology) -------------------------------------------
+from src.mcp_servers.quickgo.server import (
+    quickgo_annotation_search,
+    quickgo_term_info,
+    quickgo_term_descendants,
+    quickgo_slim_mapping,
+)
+
+# -- UniChem (Chemical ID Mapping) -------------------------------------
+from src.mcp_servers.unichem.server import (
+    unichem_lookup,
+    unichem_convert_id,
+    unichem_search_inchikey,
+    unichem_get_sources,
+)
+
+# -- UCSC Genome Browser -----------------------------------------------
+from src.mcp_servers.ucsc.server import (
+    ucsc_get_track_data,
+    ucsc_search_genes,
+    ucsc_get_sequence,
+    ucsc_list_tracks,
+    ucsc_get_chromosomes,
+)
+
+# -- JASPAR (Transcription Factor Motifs) ------------------------------
+from src.mcp_servers.jaspar.server import (
+    jaspar_search_motifs,
+    jaspar_get_matrix,
+    jaspar_get_pfm,
+    jaspar_search_by_tf,
+)
+
+# -- Monarch Initiative (Phenotype-Genotype) ---------------------------
+from src.mcp_servers.monarch.server import (
+    monarch_search_entity,
+    monarch_get_associations,
+    monarch_get_entity,
+    monarch_get_phenotypes,
+)
+
+# -- PRIDE (Proteomics) ------------------------------------------------
+from src.mcp_servers.pride.server import (
+    pride_search_projects,
+    pride_get_project,
+    pride_get_project_files,
+)
+
+# -- MPD (Mouse Phenome Database) --------------------------------------
+from src.mcp_servers.mpd.server import (
+    mpd_search_measurements,
+    mpd_get_strain_data,
+    mpd_get_ontology_terms,
+)
+
+# -- ReMap (Regulatory Maps) -------------------------------------------
+from src.mcp_servers.remap.server import (
+    remap_search_peaks,
+    remap_get_targets,
+    remap_get_crms,
+    remap_list_experiments,
+)
+
+# -- Taxonomy (WoRMS + PaleobiologyDB + IUCN) -------------------------
+from src.mcp_servers.taxonomy.server import (
+    worms_search_taxa,
+    worms_get_record,
+    paleodb_search_taxa,
+    paleodb_get_occurrences,
+    iucn_get_species_status,
+)
+
+# -- Alignment CLI (samtools + BWA -- optional) ------------------------
+_HAS_ALIGNMENT = False
+try:
+    from src.mcp_servers.alignment.server import (
+        samtools_view,
+        samtools_stats,
+        samtools_index,
+        samtools_depth,
+        bwa_align,
+    )
+    _HAS_ALIGNMENT = True
+except ImportError:
+    logger.warning("Alignment MCP server not available (missing samtools/bwa?)")
+
+# -- GWAS CLI (PLINK + GCTA -- optional) ------------------------------
+_HAS_GWAS_CLI = False
+try:
+    from src.mcp_servers.gwas_cli.server import (
+        plink_assoc,
+        plink_ld,
+        plink_pca,
+        plink_clump,
+        gcta_greml,
+        gcta_cojo,
+    )
+    _HAS_GWAS_CLI = True
+except ImportError:
+    logger.warning("GWAS CLI MCP server not available (missing plink/gcta?)")
+
+# -- Phylogenetics CLI (MUSCLE + FastTree + IQ-TREE -- optional) -------
+_HAS_PHYLO = False
+try:
+    from src.mcp_servers.phylogenetics.server import (
+        muscle_align,
+        fasttree_build,
+        iqtree_build,
+        iqtree_model_test,
+    )
+    _HAS_PHYLO = True
+except ImportError:
+    logger.warning("Phylogenetics MCP server not available")
+
+# -- Epigenomics CLI (HOMER + MACS2 -- optional) ----------------------
+_HAS_EPIGENOMICS = False
+try:
+    from src.mcp_servers.epigenomics_cli.server import (
+        macs2_callpeak,
+        macs2_bdgcmp,
+        homer_find_motifs,
+        homer_annotate_peaks,
+    )
+    _HAS_EPIGENOMICS = True
+except ImportError:
+    logger.warning("Epigenomics CLI MCP server not available (missing macs2/homer?)")
+
+# -- SV Calling CLI (LUMPY -- optional) --------------------------------
+_HAS_SV_CALLING = False
+try:
+    from src.mcp_servers.sv_calling.server import (
+        lumpy_call_sv,
+        lumpy_filter_sv,
+    )
+    _HAS_SV_CALLING = True
+except ImportError:
+    logger.warning("SV Calling MCP server not available (missing lumpy?)")
+
 # -- Metabolic (requires COBRApy -- optional) --------------------------
 _HAS_METABOLIC = False
 try:
@@ -331,6 +479,58 @@ TOOL_REGISTRY: dict[str, Callable] = {
     "scan_toxin_domains": scan_toxin_domains,
     "screen_virulence_factors": screen_virulence_factors,
     "check_bwc_compliance": check_bwc_compliance,
+    # --- cBioPortal (Cancer Genomics) ---
+    "query_cbioportal_mutations": query_cbioportal_mutations,
+    "get_cbioportal_copy_number": get_cbioportal_copy_number,
+    "get_cbioportal_expression": get_cbioportal_expression,
+    "get_cbioportal_survival": get_cbioportal_survival,
+    "search_cbioportal_studies": search_cbioportal_studies,
+    "get_cbioportal_gene_summary": get_cbioportal_gene_summary,
+    # --- QuickGO ---
+    "quickgo_annotation_search": quickgo_annotation_search,
+    "quickgo_term_info": quickgo_term_info,
+    "quickgo_term_descendants": quickgo_term_descendants,
+    "quickgo_slim_mapping": quickgo_slim_mapping,
+    # --- UniChem ---
+    "unichem_lookup": unichem_lookup,
+    "unichem_convert_id": unichem_convert_id,
+    "unichem_search_inchikey": unichem_search_inchikey,
+    "unichem_get_sources": unichem_get_sources,
+    # --- UCSC Genome Browser ---
+    "ucsc_get_track_data": ucsc_get_track_data,
+    "ucsc_search_genes": ucsc_search_genes,
+    "ucsc_get_sequence": ucsc_get_sequence,
+    "ucsc_list_tracks": ucsc_list_tracks,
+    "ucsc_get_chromosomes": ucsc_get_chromosomes,
+    # --- JASPAR ---
+    "jaspar_search_motifs": jaspar_search_motifs,
+    "jaspar_get_matrix": jaspar_get_matrix,
+    "jaspar_get_pfm": jaspar_get_pfm,
+    "jaspar_search_by_tf": jaspar_search_by_tf,
+    # --- Monarch Initiative ---
+    "monarch_search_entity": monarch_search_entity,
+    "monarch_get_associations": monarch_get_associations,
+    "monarch_get_entity": monarch_get_entity,
+    "monarch_get_phenotypes": monarch_get_phenotypes,
+    # --- PRIDE ---
+    "pride_search_projects": pride_search_projects,
+    "pride_get_project": pride_get_project,
+    "pride_get_project_files": pride_get_project_files,
+    # --- MPD ---
+    "mpd_search_measurements": mpd_search_measurements,
+    "mpd_get_strain_data": mpd_get_strain_data,
+    "mpd_get_ontology_terms": mpd_get_ontology_terms,
+    # --- ReMap ---
+    "remap_search_peaks": remap_search_peaks,
+    "remap_get_targets": remap_get_targets,
+    "remap_get_crms": remap_get_crms,
+    "remap_list_experiments": remap_list_experiments,
+    # --- Taxonomy ---
+    "worms_search_taxa": worms_search_taxa,
+    "worms_get_record": worms_get_record,
+    "paleodb_search_taxa": paleodb_search_taxa,
+    "paleodb_get_occurrences": paleodb_get_occurrences,
+    "iucn_get_species_status": iucn_get_species_status,
 }
 
 # --- Metabolic (conditional) ---
@@ -384,6 +584,52 @@ if _HAS_BIORENDER:
         "search_biorender_icons": search_biorender_icons,
         "search_biorender_templates": search_biorender_templates,
         "download_figure": download_figure,
+    })
+
+# --- Alignment CLI (conditional) ---
+if _HAS_ALIGNMENT:
+    TOOL_REGISTRY.update({
+        "samtools_view": samtools_view,
+        "samtools_stats": samtools_stats,
+        "samtools_index": samtools_index,
+        "samtools_depth": samtools_depth,
+        "bwa_align": bwa_align,
+    })
+
+# --- GWAS CLI (conditional) ---
+if _HAS_GWAS_CLI:
+    TOOL_REGISTRY.update({
+        "plink_assoc": plink_assoc,
+        "plink_ld": plink_ld,
+        "plink_pca": plink_pca,
+        "plink_clump": plink_clump,
+        "gcta_greml": gcta_greml,
+        "gcta_cojo": gcta_cojo,
+    })
+
+# --- Phylogenetics CLI (conditional) ---
+if _HAS_PHYLO:
+    TOOL_REGISTRY.update({
+        "muscle_align": muscle_align,
+        "fasttree_build": fasttree_build,
+        "iqtree_build": iqtree_build,
+        "iqtree_model_test": iqtree_model_test,
+    })
+
+# --- Epigenomics CLI (conditional) ---
+if _HAS_EPIGENOMICS:
+    TOOL_REGISTRY.update({
+        "macs2_callpeak": macs2_callpeak,
+        "macs2_bdgcmp": macs2_bdgcmp,
+        "homer_find_motifs": homer_find_motifs,
+        "homer_annotate_peaks": homer_annotate_peaks,
+    })
+
+# --- SV Calling CLI (conditional) ---
+if _HAS_SV_CALLING:
+    TOOL_REGISTRY.update({
+        "lumpy_call_sv": lumpy_call_sv,
+        "lumpy_filter_sv": lumpy_filter_sv,
     })
 
 # --- Cheminformatics (conditional) ---

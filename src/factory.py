@@ -34,23 +34,50 @@ from src.mcp_bridge import wire_agent_tools
 
 # -- All agent factories ------------------------------------------------
 from src.agents import (
+    # Division 1: Target Identification
     create_statistical_genetics_agent,
     create_functional_genomics_agent,
     create_single_cell_atlas_agent,
+    # Division 2: Target Safety
     create_bio_pathways_agent,
     create_fda_safety_agent,
     create_toxicogenomics_agent,
+    create_pathology_agent,
+    create_physiology_agent,
+    # Division 3: Modality Selection
     create_target_biologist_agent,
     create_pharmacologist_agent,
+    create_molecular_biology_agent,
+    create_cell_biology_agent,
+    create_biochemistry_agent,
+    # Division 4: Molecular Design
     create_protein_intelligence_agent,
     create_antibody_engineer_agent,
     create_structure_design_agent,
     create_lead_optimization_agent,
     create_developability_agent,
+    create_biophysics_agent,
+    create_glycoengineering_agent,
+    # Division 5: Clinical Intelligence
     create_clinical_trialist_agent,
+    # Division 6: Computational Biology
     create_literature_synthesis_agent,
+    create_systems_biology_agent,
+    # Division 7: Experimental Design
     create_assay_design_agent,
+    create_lab_automation_agent,
+    create_protocols_agent,
+    # Division 8: Biosecurity
     create_dual_use_screening_agent,
+    # Division 9: Immunology & Cancer Biology
+    create_cancer_biology_agent,
+    create_immunology_agent,
+    # Division 10: Microbiology & Synthetic Biology
+    create_microbiology_agent,
+    create_synthetic_biology_agent,
+    create_bioengineering_agent,
+    # Division 11: Imaging
+    create_bioimaging_agent,
 )
 
 # -- All division factories ---------------------------------------------
@@ -63,6 +90,9 @@ from src.divisions import (
     create_compbio_lead,
     create_experimental_lead,
     create_biosecurity_lead,
+    create_immunology_cancer_lead,
+    create_synbio_lead,
+    create_imaging_lead,
 )
 
 logger = logging.getLogger("lumi.factory")
@@ -74,30 +104,19 @@ def create_system() -> dict[str, DivisionLead]:
     This is the single entry-point for bootstrapping the entire system.
     It performs three steps in order:
 
-    1. **Create specialist agents** -- instantiate all 17 specialists via
+    1. **Create specialist agents** -- instantiate all 33 specialists via
        their factory functions.
     2. **Wire tool callables** -- for every specialist, match tool schema
        names against the master :data:`~src.mcp_bridge.TOOL_REGISTRY` and
        register the corresponding callables so that LLM-generated
        ``tool_use`` blocks resolve to real function calls.
-    3. **Create division leads** -- instantiate each of the 8 division
+    3. **Create division leads** -- instantiate each of the 11 division
        leads with their specialist rosters already populated.
 
     Returns:
         A dict mapping division names to fully populated
         :class:`DivisionLead` instances, keyed exactly as the CSO
-        orchestrator expects::
-
-            {
-                "Target Identification": <DivisionLead>,
-                "Target Safety":         <DivisionLead>,
-                "Modality Selection":    <DivisionLead>,
-                "Molecular Design":      <DivisionLead>,
-                "Clinical Intelligence": <DivisionLead>,
-                "Computational Biology": <DivisionLead>,
-                "Experimental Design":   <DivisionLead>,
-                "Biosecurity":           <DivisionLead>,
-            }
+        orchestrator expects.
     """
     logger.info("Creating Lumi Virtual Lab agent swarm...")
 
@@ -114,10 +133,15 @@ def create_system() -> dict[str, DivisionLead]:
     bio_path = create_bio_pathways_agent()
     fda_safe = create_fda_safety_agent()
     toxicog = create_toxicogenomics_agent()
+    pathol = create_pathology_agent()
+    physiol = create_physiology_agent()
 
     # Division 3 -- Modality Selection
     tgt_bio = create_target_biologist_agent()
     pharma = create_pharmacologist_agent()
+    mol_bio = create_molecular_biology_agent()
+    cell_bio = create_cell_biology_agent()
+    biochem = create_biochemistry_agent()
 
     # Division 4 -- Molecular Design
     prot_intel = create_protein_intelligence_agent()
@@ -125,28 +149,48 @@ def create_system() -> dict[str, DivisionLead]:
     struct_des = create_structure_design_agent()
     lead_opt = create_lead_optimization_agent()
     develop = create_developability_agent()
+    biophys = create_biophysics_agent()
+    glyco = create_glycoengineering_agent()
 
     # Division 5 -- Clinical Intelligence
     clin_trial = create_clinical_trialist_agent()
 
     # Division 6 -- Computational Biology
     lit_synth = create_literature_synthesis_agent()
+    sys_bio = create_systems_biology_agent()
 
     # Division 7 -- Experimental Design
     assay_des = create_assay_design_agent()
+    lab_auto = create_lab_automation_agent()
+    protocols = create_protocols_agent()
 
     # Division 8 -- Biosecurity
     dual_use = create_dual_use_screening_agent()
 
+    # Division 9 -- Immunology & Cancer Biology
+    cancer_bio = create_cancer_biology_agent()
+    immuno = create_immunology_agent()
+
+    # Division 10 -- Microbiology & Synthetic Biology
+    micro = create_microbiology_agent()
+    synbio = create_synthetic_biology_agent()
+    bioeng = create_bioengineering_agent()
+
+    # Division 11 -- Imaging
+    bioimag = create_bioimaging_agent()
+
     all_agents: list[BaseAgent] = [
         stat_gen, func_gen, sc_atlas,
-        bio_path, fda_safe, toxicog,
-        tgt_bio, pharma,
-        prot_intel, ab_eng, struct_des, lead_opt, develop,
+        bio_path, fda_safe, toxicog, pathol, physiol,
+        tgt_bio, pharma, mol_bio, cell_bio, biochem,
+        prot_intel, ab_eng, struct_des, lead_opt, develop, biophys, glyco,
         clin_trial,
-        lit_synth,
-        assay_des,
+        lit_synth, sys_bio,
+        assay_des, lab_auto, protocols,
         dual_use,
+        cancer_bio, immuno,
+        micro, synbio, bioeng,
+        bioimag,
     ]
 
     # ------------------------------------------------------------------
@@ -167,25 +211,34 @@ def create_system() -> dict[str, DivisionLead]:
             specialist_agents=[stat_gen, func_gen, sc_atlas],
         ),
         "Target Safety": create_target_safety_lead(
-            specialist_agents=[bio_path, fda_safe, toxicog],
+            specialist_agents=[bio_path, fda_safe, toxicog, pathol, physiol],
         ),
         "Modality Selection": create_modality_lead(
-            specialist_agents=[tgt_bio, pharma],
+            specialist_agents=[tgt_bio, pharma, mol_bio, cell_bio, biochem],
         ),
         "Molecular Design": create_molecular_design_lead(
-            specialist_agents=[prot_intel, ab_eng, struct_des, lead_opt, develop],
+            specialist_agents=[prot_intel, ab_eng, struct_des, lead_opt, develop, biophys, glyco],
         ),
         "Clinical Intelligence": create_clinical_lead(
             specialist_agents=[clin_trial],
         ),
         "Computational Biology": create_compbio_lead(
-            specialist_agents=[lit_synth],
+            specialist_agents=[lit_synth, sys_bio],
         ),
         "Experimental Design": create_experimental_lead(
-            specialist_agents=[assay_des],
+            specialist_agents=[assay_des, lab_auto, protocols],
         ),
         "Biosecurity": create_biosecurity_lead(
             specialist_agents=[dual_use],
+        ),
+        "Immunology & Cancer Biology": create_immunology_cancer_lead(
+            specialist_agents=[cancer_bio, immuno],
+        ),
+        "Microbiology & Synthetic Biology": create_synbio_lead(
+            specialist_agents=[micro, synbio, bioeng],
+        ),
+        "Imaging": create_imaging_lead(
+            specialist_agents=[bioimag],
         ),
     }
 
