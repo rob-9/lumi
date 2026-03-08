@@ -224,3 +224,5 @@ class FinalReport(BaseModel):
     total_cost: float = Field(default=0.0, ge=0.0, description="Total LLM API cost in USD.")
     total_duration_seconds: float = Field(default=0.0, ge=0.0, description="Total wall-clock duration.")
     provenance_chain: list[EvidenceSource] = Field(default_factory=list, description="Complete chain of evidence sources used.")
+    living_document_markdown: str = Field(default="", description="Rendered living document narrative (Markdown).")
+    hitl_summary: str = Field(default="", description="Human-in-the-loop routing summary.")
