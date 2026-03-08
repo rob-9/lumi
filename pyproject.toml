@@ -70,6 +70,9 @@ dependencies = [
     "rdkit-pypi>=2023.9.0",
     "datamol>=0.12.0",
 
+    # UI
+    "streamlit>=1.40.0",
+
     # Utils
     "pydantic>=2.6.0",
     "python-dotenv>=1.0.0",
