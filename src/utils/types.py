@@ -226,3 +226,4 @@ class FinalReport(BaseModel):
     provenance_chain: list[EvidenceSource] = Field(default_factory=list, description="Complete chain of evidence sources used.")
     living_document_markdown: str = Field(default="", description="Rendered living document narrative (Markdown).")
     hitl_summary: str = Field(default="", description="Human-in-the-loop routing summary.")
+    figures: list[dict] = Field(default_factory=list, description="Visual context figures (title, caption, image_url, figure_type).")

@@ -1,0 +1,390 @@
+{
+  "query_id": "LUMI-2026-0308-TROP2",
+  "user_query": "Evaluate TROP2 as an antibody-drug conjugate (ADC) target for triple-negative breast cancer (TNBC). Assess expression, safety, druggability, and propose lead candidates.",
+  "executive_summary": "TROP2 (TACSTD2) emerges as a highly validated ADC target for TNBC with strong clinical precedent from sacituzumab govitecan (Trodelvy). Expression analysis confirms overexpression in >85% of TNBC tumors (median H-score 210) with limited expression in critical normal tissues. Safety profiling identifies manageable GI toxicity as the primary concern. Three novel ADC candidates with differentiated payloads are proposed for further development.",
+  "evidence_synthesis": {
+    "target_identification": "GWAS meta-analysis across 12 TNBC cohorts (n=14,832) identifies TACSTD2 locus with genome-wide significance (p=2.3e-12). Single-cell atlas of 48 TNBC tumors confirms TROP2 expression in 87% of epithelial cancer cells (mean TPM=142.3) vs 12% of stromal cells.",
+    "target_safety": "FDA adverse event mining (FAERS, 2020-2025) shows neutropenia (34%), diarrhea (28%), and nausea (22%) as primary AEs for sacituzumab govitecan. Toxicogenomics screen flags CYP3A4 interaction potential with SN-38 payload but no direct TROP2-mediated organ toxicity.",
+    "molecular_design": "Structure-based design using AlphaFold2 model (pLDDT=89.2) of TROP2 ECD identifies three epitope clusters. Lead antibody LM-4721 shows KD=0.8nM by SPR with favorable developability (HIC tau=8.2min, PSR=0.12, AC-SINS delta=2.1nm).",
+    "clinical_intelligence": "Phase III ASCENT trial (NCT02574455) demonstrated median OS improvement of 5.4 months (HR=0.51, p<0.001) for sacituzumab govitecan vs chemotherapy in pretreated mTNBC. Emerging resistance mechanisms include TROP2 downregulation (18% of progressors) and UGT1A1 polymorphism-driven payload metabolism."
+  },
+  "key_findings": [
+    {
+      "claim_text": "TROP2 is overexpressed in 87% of TNBC tumors with a median H-score of 210, significantly higher than normal breast tissue (H-score 45, p<0.001).",
+      "supporting_evidence": [
+        {
+          "source_db": "GEO",
+          "source_id": "GSE176078",
+          "access_date": "2026-03-08T22:27:29.350795Z",
+          "data_version": null,
+          "query_params": null
+        },
+        {
+          "source_db": "PubMed",
+          "source_id": "PMID:35082451",
+          "access_date": "2026-03-08T22:27:29.351220Z",
+          "data_version": null,
+          "query_params": null
+        },
+        {
+          "source_db": "TCGA",
+          "source_id": "TCGA-BRCA",
+          "access_date": "2026-03-08T22:27:29.351222Z",
+          "data_version": null,
+          "query_params": null
+        },
+        {
+          "source_db": "HPA",
+          "source_id": "ENSG00000184292",
+          "access_date": "2026-03-08T22:27:29.351223Z",
+          "data_version": null,
+          "query_params": null
+        }
+      ],
+      "contradicting_evidence": [
+        {
+          "source_db": "PubMed",
+          "source_id": "PMID:33891742",
+          "access_date": "2026-03-08T22:27:29.351224Z",
+          "data_version": null,
+          "query_params": null
+        }
+      ],
+      "confidence": {
+        "level": "HIGH",
+        "score": 0.92,
+        "evidence_convergence": 0.89,
+        "statistical_significance": 0.001,
+        "effect_size": 3.67,
+        "methodology_robustness": 0.91,
+        "independent_replication": 5,
+        "caveats": [],
+        "alternative_explanations": []
+      },
+      "agent_id": "single_cell_atlas",
+      "methodology": "Single-cell RNA-seq meta-analysis across 48 TNBC tumors (n=312,445 cells) with IHC validation on TMA (n=280 cores).",
+      "timestamp": "2026-03-08T22:27:29.351228Z"
+    },
+    {
+      "claim_text": "Lead ADC candidate LM-4721-DXd demonstrates IC50=0.3nM against TROP2-high TNBC cell lines (MDA-MB-468, HCC1806) with >100-fold selectivity over TROP2-negative cells.",
+      "supporting_evidence": [
+        {
+          "source_db": "Internal",
+          "source_id": "LM-4721-SCREEN-001",
+          "access_date": "2026-03-08T22:27:29.351232Z",
+          "data_version": null,
+          "query_params": null
+        },
+        {
+          "source_db": "ChEMBL",
+          "source_id": "CHEMBL4297416",
+          "access_date": "2026-03-08T22:27:29.351233Z",
+          "data_version": null,
+          "query_params": null
+        }
+      ],
+      "contradicting_evidence": [],
+      "confidence": {
+        "level": "HIGH",
+        "score": 0.85,
+        "evidence_convergence": 0.82,
+        "statistical_significance": null,
+        "effect_size": null,
+        "methodology_robustness": 0.88,
+        "independent_replication": 3,
+        "caveats": [],
+        "alternative_explanations": []
+      },
+      "agent_id": "lead_optimization",
+      "methodology": "In vitro cytotoxicity panel (CellTiter-Glo) across 12 TNBC and 4 normal cell lines with 72h drug exposure.",
+      "timestamp": "2026-03-08T22:27:29.351235Z"
+    },
+    {
+      "claim_text": "TROP2-directed ADCs show manageable safety profiles with neutropenia as the dose-limiting toxicity. No TROP2-mediated organ toxicity observed in cynomolgus monkey GLP studies up to 60mg/kg.",
+      "supporting_evidence": [
+        {
+          "source_db": "FDA-FAERS",
+          "source_id": "sacituzumab-govitecan",
+          "access_date": "2026-03-08T22:27:29.351239Z",
+          "data_version": null,
+          "query_params": null
+        },
+        {
+          "source_db": "PubMed",
+          "source_id": "PMID:34782359",
+          "access_date": "2026-03-08T22:27:29.351240Z",
+          "data_version": null,
+          "query_params": null
+        }
+      ],
+      "contradicting_evidence": [],
+      "confidence": {
+        "level": "MEDIUM",
+        "score": 0.71,
+        "evidence_convergence": 0.65,
+        "statistical_significance": null,
+        "effect_size": null,
+        "methodology_robustness": 0.78,
+        "independent_replication": 2,
+        "caveats": [
+          "Limited long-term safety data beyond 12 months",
+          "Species differences in TROP2 tissue distribution"
+        ],
+        "alternative_explanations": []
+      },
+      "agent_id": "fda_safety",
+      "methodology": "FDA FAERS data mining (2020-2025) combined with preclinical toxicology literature review.",
+      "timestamp": "2026-03-08T22:27:29.351246Z"
+    },
+    {
+      "claim_text": "Acquired resistance to TROP2 ADCs occurs in ~18% of patients, primarily through TROP2 surface downregulation and UGT1A1*28 polymorphism affecting payload metabolism.",
+      "supporting_evidence": [
+        {
+          "source_db": "PubMed",
+          "source_id": "PMID:36897583",
+          "access_date": "2026-03-08T22:27:29.351250Z",
+          "data_version": null,
+          "query_params": null
+        }
+      ],
+      "contradicting_evidence": [
+        {
+          "source_db": "PubMed",
+          "source_id": "PMID:37124556",
+          "access_date": "2026-03-08T22:27:29.351251Z",
+          "data_version": null,
+          "query_params": null
+        }
+      ],
+      "confidence": {
+        "level": "LOW",
+        "score": 0.45,
+        "evidence_convergence": 0.38,
+        "statistical_significance": null,
+        "effect_size": null,
+        "methodology_robustness": 0.55,
+        "independent_replication": 1,
+        "caveats": [
+          "Small sample sizes in resistance studies",
+          "Mechanism inferred from post-hoc analysis"
+        ],
+        "alternative_explanations": [
+          "Tumor heterogeneity rather than true resistance",
+          "Drug efflux via MDR1 upregulation"
+        ]
+      },
+      "agent_id": "clinical_trialist",
+      "methodology": "Retrospective analysis of ASCENT trial biomarker cohort (n=48 paired biopsies).",
+      "timestamp": "2026-03-08T22:27:29.351252Z"
+    }
+  ],
+  "risk_assessment": {
+    "safety_risk": "MODERATE \u2014 GI toxicity (diarrhea, nausea) is the primary clinical concern. Neutropenia is manageable with G-CSF support. No organ-specific TROP2-mediated toxicity identified.",
+    "feasibility_risk": "LOW \u2014 TROP2 is a validated target with approved ADC (Trodelvy). Manufacturing of antibody and ADC conjugation are well-established processes.",
+    "commercial_risk": "MODERATE \u2014 Competitive landscape includes sacituzumab govitecan (Gilead) and datopotamab deruxtecan (Daiichi/AZ). Differentiation through payload and linker innovation is critical.",
+    "regulatory_risk": "LOW \u2014 Clear regulatory precedent with Trodelvy approval. FDA Breakthrough Therapy designation likely for differentiated ADC candidates."
+  },
+  "molecular_design_candidates": [
+    {
+      "name": "LM-4721-DXd",
+      "antibody": "LM-4721 (anti-TROP2 IgG1)",
+      "payload": "DXd (exatecan derivative)",
+      "DAR": 8,
+      "KD_nM": 0.8,
+      "IC50_nM": 0.3,
+      "selectivity": ">100x"
+    },
+    {
+      "name": "LM-4721-SN38",
+      "antibody": "LM-4721 (anti-TROP2 IgG1)",
+      "payload": "SN-38 (topoisomerase I)",
+      "DAR": 7.6,
+      "KD_nM": 0.8,
+      "IC50_nM": 0.9,
+      "selectivity": ">50x"
+    },
+    {
+      "name": "LM-4898-MMAE",
+      "antibody": "LM-4898 (anti-TROP2 IgG1)",
+      "payload": "MMAE (tubulin)",
+      "DAR": 4,
+      "KD_nM": 1.2,
+      "IC50_nM": 1.8,
+      "selectivity": ">30x"
+    }
+  ],
+  "biosecurity_clearance": {
+    "category": "GREEN",
+    "agent_results": [
+      {
+        "screen_name": "BLAST select agent",
+        "passed": true,
+        "category": "GREEN",
+        "details": "No homology to select agents or toxins.",
+        "highest_identity": null,
+        "flagged_domains": []
+      },
+      {
+        "screen_name": "Toxin domain scan",
+        "passed": true,
+        "category": "GREEN",
+        "details": "No known toxin domains detected in antibody sequence.",
+        "highest_identity": null,
+        "flagged_domains": []
+      },
+      {
+        "screen_name": "Dual-use risk",
+        "passed": true,
+        "category": "GREEN",
+        "details": "Standard therapeutic antibody \u2014 no dual-use concern.",
+        "highest_identity": null,
+        "flagged_domains": []
+      }
+    ],
+    "veto": false,
+    "veto_reasons": [],
+    "audit_id": "BSC-2026-0308-001"
+  },
+  "recommended_experiments": [
+    {
+      "experiment": "In vivo efficacy study in TROP2-high TNBC PDX models (3 models, n=10/group)",
+      "priority": "HIGH",
+      "rationale": "Validate lead candidate LM-4721-DXd tumor growth inhibition in vivo."
+    },
+    {
+      "experiment": "Epitope binning and competition assay vs sacituzumab",
+      "priority": "HIGH",
+      "rationale": "Confirm differentiated epitope binding for patent freedom-to-operate."
+    },
+    {
+      "experiment": "Single-dose PK/TK study in cynomolgus monkeys (3+3 dose escalation)",
+      "priority": "MEDIUM",
+      "rationale": "Establish preliminary PK parameters and tolerability."
+    },
+    {
+      "experiment": "TROP2 expression survey across 20 normal tissues by IHC",
+      "priority": "MEDIUM",
+      "rationale": "Map on-target off-tumor liability for safety assessment."
+    },
+    {
+      "experiment": "UGT1A1 genotype-stratified in vitro metabolism study",
+      "priority": "LOW",
+      "rationale": "Assess payload metabolism variability across UGT1A1 genotypes."
+    }
+  ],
+  "limitations": [
+    "In vitro data only \u2014 no in vivo efficacy or PK data for novel candidates yet.",
+    "Resistance mechanism analysis based on small retrospective cohort (n=48).",
+    "AlphaFold2 structure used for epitope mapping \u2014 not experimentally validated.",
+    "Commercial landscape analysis limited to publicly available pipeline data.",
+    "No assessment of CNS penetration or brain metastasis activity."
+  ],
+  "total_cost": 4.87,
+  "total_duration_seconds": 342.5,
+  "provenance_chain": [
+    {
+      "source_db": "GEO",
+      "source_id": "GSE176078",
+      "access_date": "2026-03-08T22:27:29.351263Z",
+      "data_version": "2023-01",
+      "query_params": null
+    },
+    {
+      "source_db": "TCGA",
+      "source_id": "TCGA-BRCA",
+      "access_date": "2026-03-08T22:27:29.351265Z",
+      "data_version": "GDC v38",
+      "query_params": null
+    },
+    {
+      "source_db": "HPA",
+      "source_id": "ENSG00000184292",
+      "access_date": "2026-03-08T22:27:29.351266Z",
+      "data_version": "v23",
+      "query_params": null
+    },
+    {
+      "source_db": "PubMed",
+      "source_id": "PMID:35082451",
+      "access_date": "2026-03-08T22:27:29.351266Z",
+      "data_version": null,
+      "query_params": null
+    },
+    {
+      "source_db": "PubMed",
+      "source_id": "PMID:34782359",
+      "access_date": "2026-03-08T22:27:29.351267Z",
+      "data_version": null,
+      "query_params": null
+    },
+    {
+      "source_db": "PubMed",
+      "source_id": "PMID:36897583",
+      "access_date": "2026-03-08T22:27:29.351268Z",
+      "data_version": null,
+      "query_params": null
+    },
+    {
+      "source_db": "ChEMBL",
+      "source_id": "CHEMBL4297416",
+      "access_date": "2026-03-08T22:27:29.351269Z",
+      "data_version": "v33",
+      "query_params": null
+    },
+    {
+      "source_db": "FDA-FAERS",
+      "source_id": "sacituzumab-govitecan",
+      "access_date": "2026-03-08T22:27:29.351269Z",
+      "data_version": "2025-Q4",
+      "query_params": null
+    },
+    {
+      "source_db": "ClinicalTrials.gov",
+      "source_id": "NCT02574455",
+      "access_date": "2026-03-08T22:27:29.351270Z",
+      "data_version": null,
+      "query_params": null
+    },
+    {
+      "source_db": "UniProt",
+      "source_id": "Q15208",
+      "access_date": "2026-03-08T22:27:29.351271Z",
+      "data_version": "2024_05",
+      "query_params": null
+    },
+    {
+      "source_db": "AlphaFold DB",
+      "source_id": "AF-Q15208-F1",
+      "access_date": "2026-03-08T22:27:29.351271Z",
+      "data_version": "v4",
+      "query_params": null
+    }
+  ],
+  "living_document_markdown": "",
+  "hitl_summary": "Finding #4 (acquired resistance mechanisms, confidence=0.45) was routed to human expert Dr. Sarah Chen (clinical oncology). Expert confirmed resistance pattern but noted additional mechanism: tumor microenvironment-mediated immune evasion post-ADC treatment. Finding confidence upgraded from 0.45 to 0.52 after expert review. Recommendation: include TME profiling in follow-up studies.",
+  "figures": [
+    {
+      "title": "TROP2 Expression Heatmap",
+      "caption": "Single-cell expression analysis showing TROP2 overexpression in basal-like 1 and immunomodulatory subtypes across 48 TNBC tumors.",
+      "image_url": "https://placehold.co/600x360/264653/8EC8D8?text=TROP2+Expression+Heatmap",
+      "figure_type": "HEATMAP"
+    },
+    {
+      "title": "TROP2 Signaling Pathway",
+      "caption": "Key downstream signaling: TROP2 cleavage releases intracellular domain, activating beta-catenin nuclear translocation and cyclin D1 expression.",
+      "image_url": "https://placehold.co/600x360/2A9D8F/ffffff?text=TROP2+Signaling+Pathway",
+      "figure_type": "PATHWAY"
+    },
+    {
+      "title": "ADC Mechanism of Action",
+      "caption": "LM-4721-DXd binds TROP2 ECD, internalizes via clathrin-mediated endocytosis, releases DXd payload in lysosomes inducing DNA damage.",
+      "image_url": "https://placehold.co/600x360/E63946/ffffff?text=ADC+Mechanism+of+Action",
+      "figure_type": "MOA"
+    }
+  ],
+  "_metadata": {
+    "generator": "lumi-report-generator",
+    "version": "0.1.0",
+    "generated_at": "2026-03-08T22:27:31.329519+00:00"
+  }
+}
