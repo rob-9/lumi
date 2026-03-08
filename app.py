@@ -790,6 +790,36 @@ def render_monitor_tab() -> None:
 
     st.divider()
 
+    # --- Pipeline Progress (#7-#10) -----------------------------------------
+    # TODO: Wire to sublab pipeline runners (#7-#10)
+    st.subheader("Pipeline Progress")
+    if plan:
+        mock_steps = [
+            {"name": "Query parsing & scope confirmation", "status": "complete"},
+            {"name": "Agent dispatch & data collection", "status": "complete"},
+            {"name": "Multi-agent debate", "status": "running"},
+            {"name": "HITL review (if needed)", "status": "pending"},
+            {"name": "Report generation", "status": "pending"},
+        ]
+        completed = sum(1 for s in mock_steps if s["status"] == "complete")
+        progress = completed / len(mock_steps)
+        st.progress(progress, text=f"{progress:.0%} complete")
+
+        status_icons = {"complete": "checkmark", "running": "arrows_counterclockwise", "pending": "white_circle"}
+        for step in mock_steps:
+            icon = status_icons.get(step["status"], "white_circle")
+            st.markdown(f":{icon}: {step['name']}")
+
+        time_cols = st.columns(2)
+        with time_cols[0]:
+            st.caption("Elapsed: 2m 14s")
+        with time_cols[1]:
+            st.caption("Est. remaining: 1m 30s")
+    else:
+        st.info("No active pipeline. Submit a query first.")
+
+    st.divider()
+
     # Cost tracker placeholder
     st.subheader("Cost Tracker")
     if st.session_state.mock_report:
