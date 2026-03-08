@@ -21,9 +21,298 @@ from src.utils.types import (
     FinalReport,
     Phase,
     Priority,
-    Task,
-    TaskStatus,
 )
+
+# ---------------------------------------------------------------------------
+# Theme / Custom CSS
+# ---------------------------------------------------------------------------
+
+CUSTOM_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --bg-primary: #faf9f5;
+    --bg-card: #ffffff;
+    --bg-input: #f5f4f0;
+    --border: #e8e6e1;
+    --border-hover: #d0cec9;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b6b6b;
+    --text-muted: #9b9b9b;
+    --accent: #0279ee;
+    --accent-light: #e8f2fd;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --orange: #ea580c;
+    --orange-light: #fff7ed;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+}
+
+/* Global */
+.stApp, .main .block-container {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    background-color: var(--bg-primary) !important;
+}
+
+.main .block-container {
+    max-width: 1100px;
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+}
+
+/* Hide default Streamlit header/footer */
+header[data-testid="stHeader"] { background: var(--bg-primary) !important; }
+footer { display: none !important; }
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: var(--bg-card) !important;
+    border-right: 1px solid var(--border) !important;
+}
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 1.5rem !important;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    letter-spacing: -0.02em !important;
+}
+h1 { font-size: 1.5rem !important; }
+h2 { font-size: 1.2rem !important; }
+h3 { font-size: 1.05rem !important; }
+
+p, li, span, div {
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 0;
+    background: transparent;
+    border-bottom: 1px solid var(--border);
+}
+.stTabs [data-baseweb="tab"] {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 0.6rem 1.2rem;
+    border-bottom: 2px solid transparent;
+    background: transparent !important;
+}
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--text-primary);
+    background: transparent !important;
+}
+.stTabs [data-baseweb="tab-panel"] {
+    padding-top: 1.5rem;
+}
+
+/* Cards / containers with border */
+div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    padding: 0.2rem !important;
+}
+
+/* Buttons */
+.stButton > button {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 0.82rem !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--border) !important;
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    padding: 0.4rem 1rem !important;
+    transition: all 0.15s ease !important;
+    box-shadow: none !important;
+}
+.stButton > button:hover {
+    border-color: var(--border-hover) !important;
+    background: var(--bg-input) !important;
+}
+.stButton > button[kind="primary"],
+.stButton > button[data-testid="stBaseButton-primary"] {
+    background: var(--text-primary) !important;
+    color: white !important;
+    border-color: var(--text-primary) !important;
+}
+.stButton > button[kind="primary"]:hover,
+.stButton > button[data-testid="stBaseButton-primary"]:hover {
+    background: #333 !important;
+}
+
+/* Text inputs / text areas */
+.stTextArea textarea, .stTextInput input {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.9rem !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    padding: 0.8rem 1rem !important;
+}
+.stTextArea textarea:focus, .stTextInput input:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent) !important;
+}
+
+/* Selectbox */
+div[data-baseweb="select"] > div {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Metrics */
+div[data-testid="stMetric"] {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+}
+div[data-testid="stMetric"] label {
+    font-size: 0.75rem !important;
+    color: var(--text-muted) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
+    font-size: 1.3rem !important;
+    font-weight: 600 !important;
+}
+
+/* Expanders */
+details {
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    background: var(--bg-card) !important;
+}
+details summary {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+}
+
+/* Progress bar */
+div[data-testid="stProgress"] > div > div {
+    background-color: var(--bg-input) !important;
+    border-radius: 6px !important;
+}
+div[data-testid="stProgress"] > div > div > div {
+    border-radius: 6px !important;
+}
+
+/* Dividers */
+hr {
+    border-color: var(--border) !important;
+    margin: 1.2rem 0 !important;
+}
+
+/* Dataframe */
+div[data-testid="stDataFrame"] {
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    overflow: hidden;
+}
+
+/* Info / success / warning boxes */
+div[data-testid="stAlert"] {
+    border-radius: 10px !important;
+    font-size: 0.85rem !important;
+}
+
+/* Chip-style suggestion buttons */
+.suggestion-chip {
+    display: inline-block;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.3;
+}
+.suggestion-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+}
+
+/* Agent badge */
+.agent-tag {
+    display: inline-block;
+    background: var(--bg-input);
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--text-secondary);
+    margin-right: 0.3rem;
+    margin-bottom: 0.3rem;
+}
+
+/* Confidence pills */
+.conf-high { background: var(--green-light); color: var(--green); }
+.conf-medium { background: var(--orange-light); color: var(--orange); }
+.conf-low { background: var(--red-light); color: var(--red); }
+.conf-pill {
+    display: inline-block;
+    border-radius: 20px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* Debate position badges */
+.pos-support { background: var(--green-light); color: var(--green); border: 1px solid #bbf7d0; }
+.pos-challenge { background: var(--red-light); color: var(--red); border: 1px solid #fecaca; }
+.pos-neutral { background: var(--orange-light); color: var(--orange); border: 1px solid #fed7aa; }
+.pos-badge {
+    display: inline-block;
+    border-radius: 6px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* Pipeline step */
+.step-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; font-size: 0.85rem; }
+.step-icon { width: 20px; text-align: center; }
+.step-complete { color: var(--green); }
+.step-running { color: var(--orange); }
+.step-pending { color: var(--text-muted); }
+
+/* Job card status dot */
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+}
+.dot-complete { background: var(--green); }
+.dot-running { background: var(--orange); }
+.dot-queued { background: var(--border-hover); }
+
+/* Hide streamlit branding */
+#MainMenu { visibility: hidden; }
+</style>
+"""
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -32,6 +321,7 @@ from src.utils.types import (
 SUBLABS: dict[str, dict] = {
     "Target Validation": {
         "description": "Evidence dossiers with pathway diagrams and confidence scores",
+        "icon": "🎯",
         "agents": ["target_biologist", "bio_pathways", "literature_synthesis", "fda_safety"],
         "divisions": ["Target Identification", "Target Safety", "Computational Biology"],
         "examples": [
@@ -42,6 +332,7 @@ SUBLABS: dict[str, dict] = {
     },
     "Assay Troubleshooting": {
         "description": "Root-cause analysis of unexpected experimental results",
+        "icon": "🔬",
         "agents": ["assay_design", "functional_genomics", "single_cell_atlas"],
         "divisions": ["Experimental Design", "Target Identification"],
         "examples": [
@@ -52,6 +343,7 @@ SUBLABS: dict[str, dict] = {
     },
     "Biomarker Curation": {
         "description": "Panel candidates with expression heatmaps",
+        "icon": "📊",
         "agents": ["statistical_genetics", "single_cell_atlas", "clinical_trialist"],
         "divisions": ["Target Identification", "Clinical Intelligence"],
         "examples": [
@@ -62,6 +354,7 @@ SUBLABS: dict[str, dict] = {
     },
     "Regulatory Submissions": {
         "description": "Tox literature reviews with MoA illustrations",
+        "icon": "📋",
         "agents": ["toxicogenomics", "pharmacologist", "fda_safety", "literature_synthesis"],
         "divisions": ["Target Safety", "Computational Biology", "Clinical Intelligence"],
         "examples": [
@@ -72,6 +365,7 @@ SUBLABS: dict[str, dict] = {
     },
     "Lead Optimization": {
         "description": "Multi-parameter optimization of drug candidates",
+        "icon": "⚗️",
         "agents": ["lead_optimization", "antibody_engineer", "developability", "structure_design"],
         "divisions": ["Molecular Design", "Modality Selection"],
         "examples": [
@@ -82,6 +376,7 @@ SUBLABS: dict[str, dict] = {
     },
     "Clinical Translation": {
         "description": "Go/no-go evidence packages for IND-enabling studies",
+        "icon": "🏥",
         "agents": ["clinical_trialist", "pharmacologist", "statistical_genetics", "fda_safety"],
         "divisions": ["Clinical Intelligence", "Target Safety", "Computational Biology"],
         "examples": [
@@ -92,7 +387,6 @@ SUBLABS: dict[str, dict] = {
     },
 }
 
-# All agents in the system, grouped by division
 AGENTS_BY_DIVISION: dict[str, list[str]] = {
     "Target Identification": ["statistical_genetics", "functional_genomics", "single_cell_atlas"],
     "Target Safety": ["bio_pathways", "fda_safety", "toxicogenomics"],
@@ -298,43 +592,12 @@ def _mock_division_reports() -> list[DivisionReport]:
 
 
 def _mock_debate_rounds() -> list[dict]:
-    """Mock multi-agent debate data for confidence scoring visualization."""
     return [
-        {
-            "round": 1,
-            "agent_id": "target_biologist",
-            "position": "support",
-            "argument": "BRCA1 loss-of-function is well-established as a synthetic lethality target. Multiple preclinical models confirm PARP sensitivity.",
-            "evidence": ["PMID:38291045", "PMID:36842073"],
-        },
-        {
-            "round": 1,
-            "agent_id": "literature_synthesis",
-            "position": "support",
-            "argument": "247 publications consistently support BRCA1 as a validated target. Level 1 clinical evidence from OlympiAD and EMBRACA trials.",
-            "evidence": ["PMID:28578601", "PMID:29863767"],
-        },
-        {
-            "round": 2,
-            "agent_id": "pharmacologist",
-            "position": "challenge",
-            "argument": "Resistance via reversion mutations is observed in 20-30% of patients. Long-term durability of response remains uncertain.",
-            "evidence": ["PMID:37104562"],
-        },
-        {
-            "round": 2,
-            "agent_id": "fda_safety",
-            "position": "neutral",
-            "argument": "Safety profile is manageable but myelosuppression requires monitoring. Risk-benefit is favorable for BRCA-mutant patients specifically.",
-            "evidence": ["PMID:35436722"],
-        },
-        {
-            "round": 3,
-            "agent_id": "target_biologist",
-            "position": "support",
-            "argument": "Acknowledging resistance concern — combination strategies with checkpoint inhibitors may address durability. Biomarker selection mitigates risk.",
-            "evidence": ["PMID:39012345"],
-        },
+        {"round": 1, "agent_id": "target_biologist", "position": "support", "argument": "BRCA1 loss-of-function is well-established as a synthetic lethality target. Multiple preclinical models confirm PARP sensitivity.", "evidence": ["PMID:38291045", "PMID:36842073"]},
+        {"round": 1, "agent_id": "literature_synthesis", "position": "support", "argument": "247 publications consistently support BRCA1 as a validated target. Level 1 clinical evidence from OlympiAD and EMBRACA trials.", "evidence": ["PMID:28578601", "PMID:29863767"]},
+        {"round": 2, "agent_id": "pharmacologist", "position": "challenge", "argument": "Resistance via reversion mutations is observed in 20-30% of patients. Long-term durability of response remains uncertain.", "evidence": ["PMID:37104562"]},
+        {"round": 2, "agent_id": "fda_safety", "position": "neutral", "argument": "Safety profile is manageable but myelosuppression requires monitoring. Risk-benefit is favorable for BRCA-mutant patients specifically.", "evidence": ["PMID:35436722"]},
+        {"round": 3, "agent_id": "target_biologist", "position": "support", "argument": "Acknowledging resistance concern — combination strategies with checkpoint inhibitors may address durability. Biomarker selection mitigates risk.", "evidence": ["PMID:39012345"]},
     ]
 
 
@@ -344,56 +607,11 @@ def _mock_execution_plan() -> ExecutionPlan:
         user_query="Evaluate BRCA1 as a therapeutic target for triple-negative breast cancer",
         confirmed_scope="Full target validation dossier including genetic evidence, safety, and clinical translatability",
         phases=[
-            Phase(
-                phase_id=1,
-                name="Genetic Evidence Collection",
-                division="Target Identification",
-                agents=["statistical_genetics", "functional_genomics", "single_cell_atlas"],
-                dependencies=[],
-                parallel_eligible=True,
-                priority=Priority.HIGH,
-                estimated_cost=1.50,
-            ),
-            Phase(
-                phase_id=2,
-                name="Safety Assessment",
-                division="Target Safety",
-                agents=["fda_safety", "toxicogenomics", "bio_pathways"],
-                dependencies=[1],
-                parallel_eligible=True,
-                priority=Priority.HIGH,
-                estimated_cost=1.20,
-            ),
-            Phase(
-                phase_id=3,
-                name="Literature Synthesis",
-                division="Computational Biology",
-                agents=["literature_synthesis"],
-                dependencies=[],
-                parallel_eligible=False,
-                priority=Priority.MEDIUM,
-                estimated_cost=0.80,
-            ),
-            Phase(
-                phase_id=4,
-                name="Clinical Translatability",
-                division="Clinical Intelligence",
-                agents=["clinical_trialist"],
-                dependencies=[1, 2],
-                parallel_eligible=False,
-                priority=Priority.MEDIUM,
-                estimated_cost=0.70,
-            ),
-            Phase(
-                phase_id=5,
-                name="Final Synthesis & Report",
-                division=None,
-                agents=[],
-                dependencies=[1, 2, 3, 4],
-                parallel_eligible=False,
-                priority=Priority.HIGH,
-                estimated_cost=0.50,
-            ),
+            Phase(phase_id=1, name="Genetic Evidence Collection", division="Target Identification", agents=["statistical_genetics", "functional_genomics", "single_cell_atlas"], dependencies=[], parallel_eligible=True, priority=Priority.HIGH, estimated_cost=1.50),
+            Phase(phase_id=2, name="Safety Assessment", division="Target Safety", agents=["fda_safety", "toxicogenomics", "bio_pathways"], dependencies=[1], parallel_eligible=True, priority=Priority.HIGH, estimated_cost=1.20),
+            Phase(phase_id=3, name="Literature Synthesis", division="Computational Biology", agents=["literature_synthesis"], dependencies=[], parallel_eligible=False, priority=Priority.MEDIUM, estimated_cost=0.80),
+            Phase(phase_id=4, name="Clinical Translatability", division="Clinical Intelligence", agents=["clinical_trialist"], dependencies=[1, 2], parallel_eligible=False, priority=Priority.MEDIUM, estimated_cost=0.70),
+            Phase(phase_id=5, name="Final Synthesis & Report", division=None, agents=[], dependencies=[1, 2, 3, 4], parallel_eligible=False, priority=Priority.HIGH, estimated_cost=0.50),
         ],
         estimated_total_cost=4.70,
     )
@@ -403,39 +621,29 @@ def _mock_execution_plan() -> ExecutionPlan:
 # UI helpers
 # ---------------------------------------------------------------------------
 
-def confidence_badge(level: ConfidenceLevel) -> str:
-    """Return a colored label string for a confidence level."""
-    color_map = {
-        ConfidenceLevel.HIGH: "green",
-        ConfidenceLevel.MEDIUM: "orange",
-        ConfidenceLevel.LOW: "red",
-        ConfidenceLevel.INSUFFICIENT: "gray",
-    }
-    color = color_map.get(level, "gray")
-    return f":{color}[**{level.value}**]"
+def conf_pill(level: ConfidenceLevel) -> str:
+    cls = {"HIGH": "conf-high", "MEDIUM": "conf-medium", "LOW": "conf-low", "INSUFFICIENT": "conf-low"}
+    return f'<span class="conf-pill {cls.get(level.value, "conf-low")}">{level.value}</span>'
 
 
-def render_confidence_score(conf: ConfidenceAssessment) -> None:
-    """Render a confidence assessment with badge and progress bar."""
-    cols = st.columns([1, 2])
-    with cols[0]:
-        st.markdown(confidence_badge(conf.level))
-    with cols[1]:
+def agent_tag(name: str) -> str:
+    return f'<span class="agent-tag">{name}</span>'
+
+
+def pos_badge(position: str) -> str:
+    return f'<span class="pos-badge pos-{position}">{position.upper()}</span>'
+
+
+def render_confidence_bar(conf: ConfidenceAssessment) -> None:
+    c1, c2 = st.columns([1, 3])
+    with c1:
+        st.markdown(conf_pill(conf.level), unsafe_allow_html=True)
+    with c2:
         st.progress(conf.score, text=f"{conf.score:.0%}")
-
-    if conf.caveats:
-        with st.expander("Caveats"):
-            for caveat in conf.caveats:
-                st.markdown(f"- {caveat}")
-
-    if conf.alternative_explanations:
-        with st.expander("Alternative explanations"):
-            for alt in conf.alternative_explanations:
-                st.markdown(f"- {alt}")
 
 
 # ---------------------------------------------------------------------------
-# Session state initialization
+# Session state
 # ---------------------------------------------------------------------------
 
 def init_session_state() -> None:
@@ -448,7 +656,6 @@ def init_session_state() -> None:
         "mock_plan": None,
         "mock_debate": None,
         "hitl_reviews": {},
-        "generated_figures": {},
     }
     for key, val in defaults.items():
         if key not in st.session_state:
@@ -461,86 +668,85 @@ def init_session_state() -> None:
 
 def render_sidebar() -> None:
     with st.sidebar:
-        st.title("Lumi Virtual Lab")
-        st.caption("Agentic drug discovery platform")
-        st.divider()
+        st.markdown("### Lumi")
+        st.caption("AI-powered drug discovery lab")
+        st.markdown("---")
 
         # Sublab selector
-        st.subheader("Sublab")
+        st.markdown('<p style="font-size:0.75rem;color:#9b9b9b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">Sublab</p>', unsafe_allow_html=True)
         selected = st.selectbox(
-            "Choose a sublab",
+            "Sublab",
             list(SUBLABS.keys()),
             index=list(SUBLABS.keys()).index(st.session_state.selected_sublab),
             label_visibility="collapsed",
         )
         st.session_state.selected_sublab = selected
-
         sublab_info = SUBLABS[selected]
         st.caption(sublab_info["description"])
 
-        st.divider()
+        st.markdown("---")
 
-        # Agent status indicators
-        st.subheader("Agent Status")
+        # Active agents for current sublab
+        st.markdown('<p style="font-size:0.75rem;color:#9b9b9b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">Active Agents</p>', unsafe_allow_html=True)
         sublab_agents = set(sublab_info["agents"])
-        all_agents_flat = {a for agents in AGENTS_BY_DIVISION.values() for a in agents}
+        for agent in sublab_info["agents"]:
+            st.markdown(f'<div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;font-size:0.82rem;"><span style="color:#16a34a;">●</span> <code style="font-size:0.78rem;background:#f5f4f0;padding:0.1rem 0.4rem;border-radius:4px;">{agent}</code></div>', unsafe_allow_html=True)
 
+        st.markdown("---")
+
+        # All divisions (collapsed)
+        st.markdown('<p style="font-size:0.75rem;color:#9b9b9b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">All Divisions</p>', unsafe_allow_html=True)
         for division, agents in AGENTS_BY_DIVISION.items():
             with st.expander(division, expanded=False):
                 for agent in agents:
-                    if agent in sublab_agents:
-                        st.markdown(f":green_circle: `{agent}` -- active")
-                    elif agent in all_agents_flat:
-                        st.markdown(f":white_circle: `{agent}` -- available")
+                    dot_color = "#16a34a" if agent in sublab_agents else "#d0cec9"
+                    st.markdown(f'<div style="font-size:0.8rem;padding:0.15rem 0;"><span style="color:{dot_color};">●</span> <code style="font-size:0.75rem;">{agent}</code></div>', unsafe_allow_html=True)
 
-        st.divider()
+        st.markdown("---")
         st.caption("v0.1.0-dev")
 
 
 # ---------------------------------------------------------------------------
-# Tab 1: Submit Query
+# Tab: Query
 # ---------------------------------------------------------------------------
 
-def render_submit_tab() -> None:
-    st.header("Submit Research Query")
-
+def render_query_tab() -> None:
     sublab = st.session_state.selected_sublab
     sublab_info = SUBLABS[sublab]
 
-    st.info(f"Sublab: **{sublab}** -- {sublab_info['description']}")
+    # Hero area
+    st.markdown(f"## {sublab_info['icon']} {sublab}")
+    st.markdown(f'<p style="color:#6b6b6b;font-size:0.9rem;margin-top:-0.5rem;">{sublab_info["description"]}</p>', unsafe_allow_html=True)
 
-    # Example queries as quick-fill buttons
-    st.subheader("Example queries")
-    example_cols = st.columns(len(sublab_info["examples"]))
+    # Suggestion chips
+    st.markdown('<p style="font-size:0.78rem;color:#9b9b9b;margin-bottom:0.5rem;">Try an example</p>', unsafe_allow_html=True)
+    chip_cols = st.columns(len(sublab_info["examples"]))
     for i, example in enumerate(sublab_info["examples"]):
-        with example_cols[i]:
-            if st.button(
-                f"Example {i + 1}",
-                key=f"example_{sublab}_{i}",
-                help=example,
-                use_container_width=True,
-            ):
+        with chip_cols[i]:
+            if st.button(example[:60] + ("..." if len(example) > 60 else ""), key=f"chip_{sublab}_{i}", use_container_width=True):
                 st.session_state.query_text = example
+
+    st.markdown("")
 
     # Query input
     query = st.text_area(
-        "Research question",
+        "Query",
         value=st.session_state.query_text,
-        height=120,
-        placeholder="Enter your research question here...",
+        height=100,
+        placeholder="Ask a research question...",
+        label_visibility="collapsed",
     )
     st.session_state.query_text = query
 
-    # Active agents for this sublab
-    st.markdown("**Agents that will be activated:**")
-    agent_cols = st.columns(4)
-    for i, agent in enumerate(sublab_info["agents"]):
-        with agent_cols[i % 4]:
-            st.code(agent)
+    # Agent tags + submit
+    c1, c2 = st.columns([4, 1])
+    with c1:
+        tags_html = " ".join(agent_tag(a) for a in sublab_info["agents"])
+        st.markdown(f'<div style="padding-top:0.4rem;">{tags_html}</div>', unsafe_allow_html=True)
+    with c2:
+        submitted = st.button("Run", type="primary", use_container_width=True, disabled=not query.strip())
 
-    # Submit button
-    st.divider()
-    if st.button("Submit Query", type="primary", disabled=not query.strip()):
+    if submitted:
         st.session_state.submitted_query = {
             "query": query,
             "sublab": sublab,
@@ -548,429 +754,345 @@ def render_submit_tab() -> None:
             "agents": sublab_info["agents"],
             "divisions": sublab_info["divisions"],
         }
-        # Populate mock data so the Results tab has something to show
         st.session_state.mock_report = _mock_final_report()
         st.session_state.mock_divisions = _mock_division_reports()
         st.session_state.mock_plan = _mock_execution_plan()
         st.session_state.mock_debate = _mock_debate_rounds()
-        st.success("Query submitted! Switch to the **Results** tab to view output.")
-
-    # Show last submitted query
-    if st.session_state.submitted_query:
-        with st.expander("Last submitted query"):
-            st.json(st.session_state.submitted_query)
+        st.toast("Query submitted. View results below.")
 
 
 # ---------------------------------------------------------------------------
-# Tab 2: Results
+# Tab: Results
 # ---------------------------------------------------------------------------
 
 def render_results_tab() -> None:
-    st.header("Results")
-
     report: FinalReport | None = st.session_state.mock_report
     divisions: list[DivisionReport] | None = st.session_state.mock_divisions
 
     if report is None:
-        st.info("No results yet. Submit a query from the **Submit Query** tab.")
+        st.markdown('<div style="text-align:center;padding:3rem 0;color:#9b9b9b;font-size:0.9rem;">Submit a query to see results here.</div>', unsafe_allow_html=True)
         return
 
-    # Executive summary
-    st.subheader("Executive Summary")
-    st.markdown(report.executive_summary)
+    # Executive summary card
+    with st.container(border=True):
+        st.markdown("#### Executive Summary")
+        st.markdown(report.executive_summary)
 
-    # Metadata row
-    meta_cols = st.columns(3)
-    with meta_cols[0]:
-        st.metric("Total Cost", f"${report.total_cost:.2f}")
-    with meta_cols[1]:
+    # Metrics row
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        st.metric("Cost", f"${report.total_cost:.2f}")
+    with m2:
         st.metric("Duration", f"{report.total_duration_seconds:.0f}s")
-    with meta_cols[2]:
-        st.metric("Key Findings", str(len(report.key_findings)))
+    with m3:
+        st.metric("Findings", str(len(report.key_findings)))
 
-    st.divider()
-
-    # --- Visual Context (#3, #4) --------------------------------------------
-    st.subheader("Visual Context")
-
-    # Display generated figures if available in session state, otherwise show placeholders
-    figures: dict[str, str] = st.session_state.get("generated_figures", {})
-
+    # Visual context
+    st.markdown("#### Figures")
     fig_cols = st.columns(3)
-    figure_slots = [
-        ("Pathway Diagram", "pathway_diagram", "Signaling pathway for the target of interest"),
-        ("Expression Heatmap", "expression_heatmap", "Tissue/cell-type expression profile"),
-        ("Mechanism of Action", "moa_diagram", "Drug-target interaction illustration"),
+    placeholders = [
+        ("Pathway Diagram", "Signaling pathway"),
+        ("Expression Heatmap", "Tissue expression profile"),
+        ("Mechanism of Action", "Drug-target interaction"),
     ]
-    for col, (title, fig_key, caption) in zip(fig_cols, figure_slots):
+    for col, (title, caption) in zip(fig_cols, placeholders):
         with col:
-            st.markdown(f"**{title}**")
-            url = figures.get(fig_key)
-            if url:
-                st.image(url, caption=caption, use_container_width=True)
-            else:
-                with st.container(border=True, height=200):
-                    st.caption(caption)
-                    st.caption(":gray[Submit a query to generate figures]")
+            with st.container(border=True):
+                st.markdown(f'<div style="text-align:center;padding:1.5rem 0;"><p style="font-weight:500;font-size:0.85rem;margin:0;">{title}</p><p style="color:#9b9b9b;font-size:0.78rem;margin:0.3rem 0 0 0;">{caption}</p></div>', unsafe_allow_html=True)
 
-    # Additional figures row (if generated)
-    extra_keys = [k for k in figures if k not in {"pathway_diagram", "expression_heatmap", "moa_diagram"}]
-    if extra_keys:
-        extra_cols = st.columns(min(len(extra_keys), 3))
-        for i, key in enumerate(extra_keys):
-            with extra_cols[i % 3]:
-                label = key.replace("_", " ").title()
-                st.image(figures[key], caption=label, use_container_width=True)
-
-    st.divider()
-
-    # Key findings with confidence
-    st.subheader("Key Findings")
+    # Key findings
+    st.markdown("#### Key Findings")
     for i, claim in enumerate(report.key_findings):
         with st.container(border=True):
-            st.markdown(f"**Finding {i + 1}** ({claim.agent_id})")
-            st.markdown(claim.claim_text)
-            render_confidence_score(claim.confidence)
+            st.markdown(f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">'
+                        f'<span style="font-weight:500;font-size:0.85rem;">Finding {i + 1}</span>'
+                        f'{agent_tag(claim.agent_id)} {conf_pill(claim.confidence.level)}'
+                        f'</div>', unsafe_allow_html=True)
+            st.markdown(f'<p style="font-size:0.88rem;line-height:1.5;margin:0;">{claim.claim_text}</p>', unsafe_allow_html=True)
+            st.progress(claim.confidence.score, text=f"{claim.confidence.score:.0%}")
 
-            with st.expander("Evidence"):
+            with st.expander("Evidence & methodology"):
                 if claim.supporting_evidence:
-                    st.markdown("**Supporting:**")
+                    st.markdown("**Supporting**")
                     for ev in claim.supporting_evidence:
-                        st.markdown(f"- {ev.source_db}: `{ev.source_id}`")
+                        st.markdown(f"- `{ev.source_db}:{ev.source_id}`")
                 if claim.contradicting_evidence:
-                    st.markdown("**Contradicting:**")
+                    st.markdown("**Contradicting**")
                     for ev in claim.contradicting_evidence:
-                        st.markdown(f"- {ev.source_db}: `{ev.source_id}`")
+                        st.markdown(f"- `{ev.source_db}:{ev.source_id}`")
                 if claim.methodology:
-                    st.markdown(f"**Methodology:** {claim.methodology}")
+                    st.caption(f"Methodology: {claim.methodology}")
+                if claim.confidence.caveats:
+                    st.caption(f"Caveats: {'; '.join(claim.confidence.caveats)}")
 
-    st.divider()
-
-    # --- Agent Debate Viewer (#1) -------------------------------------------
-    # TODO: Wire to real debate engine from confidence scoring (#1)
-    st.subheader("Agent Debate")
+    # Agent debate
+    st.markdown("#### Agent Debate")
     debate_rounds: list[dict] | None = st.session_state.mock_debate
     if debate_rounds:
-        position_colors = {"support": "green", "challenge": "red", "neutral": "orange"}
         current_round = 0
         for entry in debate_rounds:
             if entry["round"] != current_round:
                 current_round = entry["round"]
-                st.markdown(f"**Round {current_round}**")
+                st.markdown(f'<p style="font-size:0.78rem;color:#9b9b9b;text-transform:uppercase;letter-spacing:0.04em;margin:0.8rem 0 0.3rem 0;">Round {current_round}</p>', unsafe_allow_html=True)
             with st.container(border=True):
-                cols = st.columns([1, 4])
-                with cols[0]:
-                    color = position_colors.get(entry["position"], "gray")
-                    st.markdown(f":`{color}`[**{entry['position'].upper()}**]")
-                    st.caption(entry["agent_id"])
-                with cols[1]:
-                    st.markdown(entry["argument"])
-                    if entry.get("evidence"):
-                        st.caption(f"Evidence: {', '.join(entry['evidence'])}")
+                st.markdown(f'<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;">'
+                            f'{pos_badge(entry["position"])} {agent_tag(entry["agent_id"])}'
+                            f'</div>', unsafe_allow_html=True)
+                st.markdown(f'<p style="font-size:0.85rem;line-height:1.5;margin:0;">{entry["argument"]}</p>', unsafe_allow_html=True)
+                if entry.get("evidence"):
+                    st.markdown(f'<p style="font-size:0.75rem;color:#9b9b9b;margin:0.3rem 0 0 0;">{", ".join(entry["evidence"])}</p>', unsafe_allow_html=True)
 
-        # Consensus summary
+        # Consensus
         positions = [e["position"] for e in debate_rounds]
-        support = positions.count("support")
-        challenge = positions.count("challenge")
-        neutral = positions.count("neutral")
         with st.container(border=True):
             st.markdown("**Consensus**")
-            cons_cols = st.columns(3)
-            with cons_cols[0]:
-                st.metric("Support", support)
-            with cons_cols[1]:
-                st.metric("Challenge", challenge)
-            with cons_cols[2]:
-                st.metric("Neutral", neutral)
-    else:
-        st.info("No debate data. Submit a query to see agent deliberation.")
+            cc1, cc2, cc3 = st.columns(3)
+            with cc1:
+                st.metric("Support", positions.count("support"))
+            with cc2:
+                st.metric("Challenge", positions.count("challenge"))
+            with cc3:
+                st.metric("Neutral", positions.count("neutral"))
 
-    st.divider()
-
-    # Division report cards
-    st.subheader("Division Reports")
+    # Division reports
+    st.markdown("#### Division Reports")
     if divisions:
         for div_report in divisions:
             with st.container(border=True):
-                div_cols = st.columns([3, 1])
-                with div_cols[0]:
-                    st.markdown(f"### {div_report.division_name}")
-                    st.markdown(div_report.synthesis)
-                with div_cols[1]:
-                    st.markdown("**Confidence**")
-                    render_confidence_score(div_report.confidence)
+                dc1, dc2 = st.columns([3, 1])
+                with dc1:
+                    st.markdown(f"**{div_report.division_name}**")
+                    st.markdown(f'<p style="font-size:0.85rem;color:#6b6b6b;">{div_report.synthesis}</p>', unsafe_allow_html=True)
+                with dc2:
+                    render_confidence_bar(div_report.confidence)
 
-                # Specialist results
                 if div_report.specialist_results:
-                    with st.expander(f"Specialist details ({len(div_report.specialist_results)} agents)"):
+                    with st.expander(f"{len(div_report.specialist_results)} specialist(s)"):
                         for result in div_report.specialist_results:
-                            st.markdown(f"**{result.agent_id}** (task: `{result.task_id}`)")
-                            st.caption(
-                                f"Cost: ${result.cost:.2f} | "
-                                f"Duration: {result.duration_seconds:.1f}s | "
-                                f"Tools: {', '.join(result.tools_used) if result.tools_used else 'none'}"
-                            )
+                            st.markdown(f'{agent_tag(result.agent_id)} <span style="font-size:0.78rem;color:#9b9b9b;">${result.cost:.2f} · {result.duration_seconds:.0f}s · {", ".join(result.tools_used)}</span>', unsafe_allow_html=True)
                             for finding in result.findings:
-                                st.markdown(f"- {finding.claim_text}")
-                            st.markdown("---")
-
-    st.divider()
+                                st.markdown(f'<p style="font-size:0.82rem;margin:0.2rem 0 0.5rem 1rem;">• {finding.claim_text}</p>', unsafe_allow_html=True)
 
     # Risk assessment
     if report.risk_assessment:
-        st.subheader("Risk Assessment")
-        for risk_type, description in report.risk_assessment.items():
-            label = risk_type.replace("_", " ").title()
-            st.markdown(f"- **{label}:** {description}")
+        st.markdown("#### Risk Assessment")
+        with st.container(border=True):
+            for risk_type, description in report.risk_assessment.items():
+                label = risk_type.replace("_", " ").title()
+                st.markdown(f'<p style="font-size:0.85rem;margin:0.3rem 0;"><strong>{label}</strong> — {description}</p>', unsafe_allow_html=True)
 
     # Recommended experiments
     if report.recommended_experiments:
-        st.subheader("Recommended Experiments")
-        for exp in report.recommended_experiments:
-            priority = exp.get("priority", "MEDIUM")
-            color = {"HIGH": "red", "MEDIUM": "orange", "LOW": "blue"}.get(priority, "gray")
-            st.markdown(f"- :{color}[{priority}] {exp.get('experiment', '')}")
+        st.markdown("#### Recommended Experiments")
+        with st.container(border=True):
+            for exp in report.recommended_experiments:
+                priority = exp.get("priority", "MEDIUM")
+                cls = {"HIGH": "conf-low", "MEDIUM": "conf-medium", "LOW": "conf-high"}.get(priority, "conf-medium")
+                st.markdown(f'<div style="padding:0.3rem 0;font-size:0.85rem;"><span class="conf-pill {cls}">{priority}</span> {exp.get("experiment", "")}</div>', unsafe_allow_html=True)
 
     # Limitations
     if report.limitations:
-        st.subheader("Limitations")
-        for lim in report.limitations:
-            st.markdown(f"- {lim}")
+        with st.expander("Limitations"):
+            for lim in report.limitations:
+                st.markdown(f"- {lim}")
 
-    st.divider()
-
-    # --- Export Report (#3) --------------------------------------------------
-    # TODO: Wire to report generator (#3)
-    st.subheader("Export Report")
-    export_cols = st.columns(3)
-    with export_cols[0]:
-        st.button("Export PDF", disabled=True, help="Requires report generator (#3)")
-    with export_cols[1]:
-        st.button("Export HTML", disabled=True, help="Requires report generator (#3)")
-    with export_cols[2]:
-        st.button("Export JSON", disabled=True, help="Requires report generator (#3)")
+    # Export
+    st.markdown("#### Export")
+    ec1, ec2, ec3 = st.columns(3)
+    with ec1:
+        st.button("PDF", disabled=True, use_container_width=True)
+    with ec2:
+        st.button("HTML", disabled=True, use_container_width=True)
+    with ec3:
+        st.button("JSON", disabled=True, use_container_width=True)
 
 
 # ---------------------------------------------------------------------------
-# Tab 3: Agent Monitor
+# Tab: Review
 # ---------------------------------------------------------------------------
 
-def render_monitor_tab() -> None:
-    st.header("Agent Monitor")
-
-    # Agent roster table
-    st.subheader("Agent Roster")
-    table_data = []
-    for division, agents in AGENTS_BY_DIVISION.items():
-        for agent in agents:
-            sublab_membership = [
-                name for name, info in SUBLABS.items() if agent in info["agents"]
-            ]
-            table_data.append({
-                "Agent": agent,
-                "Division": division,
-                "Sublabs": ", ".join(sublab_membership) if sublab_membership else "--",
-                "Status": "Available",
-            })
-    st.dataframe(table_data, use_container_width=True, hide_index=True)
-
-    st.divider()
-
-    # Execution plan viewer
-    st.subheader("Execution Plan")
-    plan: ExecutionPlan | None = st.session_state.mock_plan
-
-    if plan is None:
-        st.info("No execution plan yet. Submit a query first.")
-    else:
-        st.markdown(f"**Query:** {plan.user_query}")
-        st.markdown(f"**Scope:** {plan.confirmed_scope}")
-        st.metric("Estimated Total Cost", f"${plan.estimated_total_cost:.2f}")
-
-        for phase in plan.phases:
-            with st.container(border=True):
-                phase_cols = st.columns([3, 1, 1])
-                with phase_cols[0]:
-                    st.markdown(f"**Phase {phase.phase_id}: {phase.name}**")
-                    if phase.division:
-                        st.caption(f"Division: {phase.division}")
-                    if phase.agents:
-                        st.caption(f"Agents: {', '.join(phase.agents)}")
-                with phase_cols[1]:
-                    parallel_label = "Parallel" if phase.parallel_eligible else "Sequential"
-                    st.markdown(f":{'green' if phase.parallel_eligible else 'orange'}[{parallel_label}]")
-                with phase_cols[2]:
-                    st.markdown(f"${phase.estimated_cost:.2f}")
-
-                if phase.dependencies:
-                    st.caption(f"Depends on phases: {', '.join(str(d) for d in phase.dependencies)}")
-
-    st.divider()
-
-    # --- Pipeline Progress (#7-#10) -----------------------------------------
-    # TODO: Wire to sublab pipeline runners (#7-#10)
-    st.subheader("Pipeline Progress")
-    if plan:
-        mock_steps = [
-            {"name": "Query parsing & scope confirmation", "status": "complete"},
-            {"name": "Agent dispatch & data collection", "status": "complete"},
-            {"name": "Multi-agent debate", "status": "running"},
-            {"name": "HITL review (if needed)", "status": "pending"},
-            {"name": "Report generation", "status": "pending"},
-        ]
-        completed = sum(1 for s in mock_steps if s["status"] == "complete")
-        progress = completed / len(mock_steps)
-        st.progress(progress, text=f"{progress:.0%} complete")
-
-        status_icons = {"complete": "checkmark", "running": "arrows_counterclockwise", "pending": "white_circle"}
-        for step in mock_steps:
-            icon = status_icons.get(step["status"], "white_circle")
-            st.markdown(f":{icon}: {step['name']}")
-
-        time_cols = st.columns(2)
-        with time_cols[0]:
-            st.caption("Elapsed: 2m 14s")
-        with time_cols[1]:
-            st.caption("Est. remaining: 1m 30s")
-    else:
-        st.info("No active pipeline. Submit a query first.")
-
-    st.divider()
-
-    # Cost tracker placeholder
-    st.subheader("Cost Tracker")
-    if st.session_state.mock_report:
-        report: FinalReport = st.session_state.mock_report
-        cost_cols = st.columns(3)
-        with cost_cols[0]:
-            st.metric("Total LLM Cost", f"${report.total_cost:.2f}")
-        with cost_cols[1]:
-            st.metric("Total Duration", f"{report.total_duration_seconds:.0f}s")
-        with cost_cols[2]:
-            avg_cost_per_finding = report.total_cost / max(len(report.key_findings), 1)
-            st.metric("Cost per Finding", f"${avg_cost_per_finding:.2f}")
-
-        # Per-division cost breakdown (from mock division reports)
-        if st.session_state.mock_divisions:
-            st.markdown("**Per-division breakdown**")
-            div_costs = []
-            for div in st.session_state.mock_divisions:
-                div_cost = sum(r.cost for r in div.specialist_results)
-                div_duration = sum(r.duration_seconds for r in div.specialist_results)
-                div_costs.append({
-                    "Division": div.division_name,
-                    "Cost (USD)": f"${div_cost:.2f}",
-                    "Duration (s)": f"{div_duration:.1f}",
-                    "Agents Used": len(div.specialist_results),
-                })
-            st.dataframe(div_costs, use_container_width=True, hide_index=True)
-    else:
-        st.info("No cost data yet. Submit a query first.")
-
-    st.divider()
-
-    # --- Computational Biology Jobs (#5) ------------------------------------
-    # TODO: Wire to Tamarind Bio API (#5)
-    st.subheader("Computational Biology Jobs")
-    mock_jobs = [
-        {"job_id": "tb_001", "type": "protein_folding", "target": "BRCA1 BRCT domain", "status": "complete", "submitted": "2m ago"},
-        {"job_id": "tb_002", "type": "docking", "target": "PARP1-olaparib", "status": "running", "submitted": "45s ago"},
-        {"job_id": "tb_003", "type": "md_simulation", "target": "BRCA1-RAD51 complex", "status": "queued", "submitted": "10s ago"},
-    ]
-    status_icons = {"complete": ":green_circle:", "running": ":orange_circle:", "queued": ":white_circle:"}
-    for job in mock_jobs:
-        with st.container(border=True):
-            cols = st.columns([1, 2, 1, 1])
-            with cols[0]:
-                st.markdown(f"{status_icons.get(job['status'], '')} **{job['status'].upper()}**")
-            with cols[1]:
-                st.markdown(f"`{job['job_id']}` — {job['type'].replace('_', ' ')}")
-                st.caption(f"Target: {job['target']}")
-            with cols[2]:
-                st.caption(f"Submitted: {job['submitted']}")
-            with cols[3]:
-                if job["status"] == "complete":
-                    with st.expander("Results"):
-                        st.caption("Predicted structure confidence: pLDDT 87.3")
-                        st.caption("Placeholder — wire to Tamarind Bio API (#5)")
-
-
-# ---------------------------------------------------------------------------
-# Tab 4: Expert Review (#2)
-# ---------------------------------------------------------------------------
-
-def render_expert_review_tab() -> None:
-    """Human-in-the-loop review queue for low-confidence findings."""
-    # TODO: Wire to HITL routing system (#2)
-    st.header("Human-in-the-Loop Review Queue")
-
+def render_review_tab() -> None:
     report: FinalReport | None = st.session_state.mock_report
     if report is None:
-        st.info("No findings to review. Submit a query first.")
+        st.markdown('<div style="text-align:center;padding:3rem 0;color:#9b9b9b;font-size:0.9rem;">No findings to review yet.</div>', unsafe_allow_html=True)
         return
 
-    # Collect flagged findings (confidence < 0.5)
-    flagged = [
-        (i, claim) for i, claim in enumerate(report.key_findings)
-        if claim.confidence.score < 0.5
-    ]
+    flagged = [(i, claim) for i, claim in enumerate(report.key_findings) if claim.confidence.score < 0.5]
 
-    # Summary metrics
+    # Metrics
     reviewed = sum(1 for k in flagged if f"review_{k[0]}" in st.session_state.hitl_reviews)
-    metric_cols = st.columns(3)
-    with metric_cols[0]:
+    mc1, mc2, mc3 = st.columns(3)
+    with mc1:
         st.metric("Flagged", len(flagged))
-    with metric_cols[1]:
+    with mc2:
         st.metric("Pending", len(flagged) - reviewed)
-    with metric_cols[2]:
+    with mc3:
         st.metric("Reviewed", reviewed)
 
     if not flagged:
-        st.success("All findings meet the confidence threshold. No expert review needed.")
+        st.markdown('<div style="text-align:center;padding:2rem 0;color:#16a34a;font-size:0.9rem;">All findings meet the confidence threshold.</div>', unsafe_allow_html=True)
         return
-
-    st.divider()
 
     for idx, claim in flagged:
         review_key = f"review_{idx}"
         with st.container(border=True):
-            st.markdown(f"**Flagged Finding** (from `{claim.agent_id}`)")
-            st.markdown(claim.claim_text)
+            st.markdown(f'<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">'
+                        f'<span style="font-weight:500;font-size:0.85rem;">Flagged Finding</span>'
+                        f'{agent_tag(claim.agent_id)} {conf_pill(claim.confidence.level)}'
+                        f'</div>', unsafe_allow_html=True)
+            st.markdown(f'<p style="font-size:0.88rem;line-height:1.5;">{claim.claim_text}</p>', unsafe_allow_html=True)
+            st.progress(claim.confidence.score, text=f"{claim.confidence.score:.0%}")
 
-            flag_cols = st.columns([1, 2])
-            with flag_cols[0]:
-                st.markdown(confidence_badge(claim.confidence.level))
-                st.caption(f"Score: {claim.confidence.score:.0%}")
-            with flag_cols[1]:
-                st.caption(f"Reason: Confidence below 50% threshold")
-
-            # Expert feedback form
             feedback = st.text_area(
                 "Expert feedback",
                 key=f"feedback_{idx}",
-                placeholder="Provide your assessment of this finding...",
+                placeholder="Your assessment...",
                 height=80,
+                label_visibility="collapsed",
             )
 
-            btn_cols = st.columns(3)
-            with btn_cols[0]:
-                if st.button("Approve", key=f"approve_{idx}", type="primary"):
+            bc1, bc2, bc3 = st.columns(3)
+            with bc1:
+                if st.button("Approve", key=f"approve_{idx}", type="primary", use_container_width=True):
                     st.session_state.hitl_reviews[review_key] = {"verdict": "approved", "feedback": feedback}
-            with btn_cols[1]:
-                if st.button("Reject", key=f"reject_{idx}"):
+            with bc2:
+                if st.button("Reject", key=f"reject_{idx}", use_container_width=True):
                     st.session_state.hitl_reviews[review_key] = {"verdict": "rejected", "feedback": feedback}
-            with btn_cols[2]:
-                if st.button("Request More Evidence", key=f"more_{idx}"):
+            with bc3:
+                if st.button("Need More Evidence", key=f"more_{idx}", use_container_width=True):
                     st.session_state.hitl_reviews[review_key] = {"verdict": "needs_evidence", "feedback": feedback}
 
-            # Show existing review
             if review_key in st.session_state.hitl_reviews:
                 review = st.session_state.hitl_reviews[review_key]
-                verdict_colors = {"approved": "green", "rejected": "red", "needs_evidence": "orange"}
-                color = verdict_colors.get(review["verdict"], "gray")
-                st.markdown(f":{color}[Reviewed: **{review['verdict'].upper()}**]")
+                verdict_cls = {"approved": "conf-high", "rejected": "conf-low", "needs_evidence": "conf-medium"}
+                st.markdown(f'<div style="margin-top:0.5rem;"><span class="conf-pill {verdict_cls.get(review["verdict"], "")}">{review["verdict"].replace("_", " ").upper()}</span></div>', unsafe_allow_html=True)
                 if review["feedback"]:
                     st.caption(f"Feedback: {review['feedback']}")
+
+
+# ---------------------------------------------------------------------------
+# Tab: Monitor
+# ---------------------------------------------------------------------------
+
+def render_monitor_tab() -> None:
+    # Agent roster
+    st.markdown("#### Agent Roster")
+    table_data = []
+    for division, agents in AGENTS_BY_DIVISION.items():
+        for agent in agents:
+            sublab_membership = [name for name, info in SUBLABS.items() if agent in info["agents"]]
+            table_data.append({
+                "Agent": agent,
+                "Division": division,
+                "Sublabs": ", ".join(sublab_membership) if sublab_membership else "—",
+                "Status": "Available",
+            })
+    st.dataframe(table_data, use_container_width=True, hide_index=True)
+
+    # Execution plan
+    st.markdown("#### Execution Plan")
+    plan: ExecutionPlan | None = st.session_state.mock_plan
+
+    if plan is None:
+        st.caption("No execution plan yet.")
+    else:
+        with st.container(border=True):
+            st.markdown(f'<p style="font-size:0.85rem;"><strong>Query:</strong> {plan.user_query}</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="font-size:0.82rem;color:#6b6b6b;">{plan.confirmed_scope}</p>', unsafe_allow_html=True)
+
+        for phase in plan.phases:
+            with st.container(border=True):
+                pc1, pc2, pc3 = st.columns([4, 1, 1])
+                with pc1:
+                    st.markdown(f"**Phase {phase.phase_id}: {phase.name}**")
+                    if phase.division:
+                        st.caption(phase.division)
+                    if phase.agents:
+                        st.markdown(" ".join(agent_tag(a) for a in phase.agents), unsafe_allow_html=True)
+                with pc2:
+                    label = "Parallel" if phase.parallel_eligible else "Sequential"
+                    cls = "conf-high" if phase.parallel_eligible else "conf-medium"
+                    st.markdown(f'<span class="conf-pill {cls}">{label}</span>', unsafe_allow_html=True)
+                with pc3:
+                    st.markdown(f'<span style="font-size:0.85rem;font-weight:500;">${phase.estimated_cost:.2f}</span>', unsafe_allow_html=True)
+                if phase.dependencies:
+                    st.caption(f"Depends on: {', '.join(str(d) for d in phase.dependencies)}")
+
+        st.metric("Estimated Total", f"${plan.estimated_total_cost:.2f}")
+
+    # Pipeline progress
+    st.markdown("#### Pipeline Progress")
+    if plan:
+        steps = [
+            ("Query parsing & scope confirmation", "complete"),
+            ("Agent dispatch & data collection", "complete"),
+            ("Multi-agent debate", "running"),
+            ("HITL review (if needed)", "pending"),
+            ("Report generation", "pending"),
+        ]
+        completed = sum(1 for _, s in steps if s == "complete")
+        st.progress(completed / len(steps), text=f"{completed}/{len(steps)} steps")
+
+        icons = {"complete": "✓", "running": "↻", "pending": "○"}
+        for name, status in steps:
+            st.markdown(f'<div class="step-row"><span class="step-icon step-{status}">{icons[status]}</span><span>{name}</span></div>', unsafe_allow_html=True)
+
+        tc1, tc2 = st.columns(2)
+        with tc1:
+            st.caption("Elapsed: 2m 14s")
+        with tc2:
+            st.caption("Est. remaining: 1m 30s")
+    else:
+        st.caption("No active pipeline.")
+
+    # Cost tracker
+    st.markdown("#### Cost Tracker")
+    if st.session_state.mock_report:
+        report: FinalReport = st.session_state.mock_report
+        cc1, cc2, cc3 = st.columns(3)
+        with cc1:
+            st.metric("LLM Cost", f"${report.total_cost:.2f}")
+        with cc2:
+            st.metric("Duration", f"{report.total_duration_seconds:.0f}s")
+        with cc3:
+            avg = report.total_cost / max(len(report.key_findings), 1)
+            st.metric("Per Finding", f"${avg:.2f}")
+
+        if st.session_state.mock_divisions:
+            div_costs = []
+            for div in st.session_state.mock_divisions:
+                div_cost = sum(r.cost for r in div.specialist_results)
+                div_dur = sum(r.duration_seconds for r in div.specialist_results)
+                div_costs.append({
+                    "Division": div.division_name,
+                    "Cost": f"${div_cost:.2f}",
+                    "Duration": f"{div_dur:.0f}s",
+                    "Agents": len(div.specialist_results),
+                })
+            st.dataframe(div_costs, use_container_width=True, hide_index=True)
+    else:
+        st.caption("No cost data yet.")
+
+    # Computational biology jobs
+    st.markdown("#### Compute Jobs")
+    jobs = [
+        {"job_id": "tb_001", "type": "protein_folding", "target": "BRCA1 BRCT domain", "status": "complete", "submitted": "2m ago"},
+        {"job_id": "tb_002", "type": "docking", "target": "PARP1-olaparib", "status": "running", "submitted": "45s ago"},
+        {"job_id": "tb_003", "type": "md_simulation", "target": "BRCA1-RAD51 complex", "status": "queued", "submitted": "10s ago"},
+    ]
+    for job in jobs:
+        with st.container(border=True):
+            jc1, jc2 = st.columns([4, 1])
+            with jc1:
+                dot_cls = f"dot-{job['status']}"
+                st.markdown(f'<div style="font-size:0.85rem;"><span class="status-dot {dot_cls}"></span>'
+                            f'<strong>{job["type"].replace("_", " ")}</strong>'
+                            f'<span style="color:#9b9b9b;margin-left:0.5rem;">{job["target"]}</span></div>', unsafe_allow_html=True)
+            with jc2:
+                st.markdown(f'<span style="font-size:0.78rem;color:#9b9b9b;">{job["submitted"]}</span>', unsafe_allow_html=True)
+            if job["status"] == "complete":
+                with st.expander("Results"):
+                    st.caption("pLDDT 87.3 — Placeholder for Tamarind Bio API")
 
 
 # ---------------------------------------------------------------------------
@@ -979,27 +1101,25 @@ def render_expert_review_tab() -> None:
 
 def main() -> None:
     st.set_page_config(
-        page_title="Lumi Virtual Lab",
-        page_icon="lab",
+        page_title="Lumi",
+        page_icon="✦",
         layout="wide",
     )
 
+    st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
     init_session_state()
     render_sidebar()
 
-    tab_submit, tab_results, tab_review, tab_monitor = st.tabs(
-        ["Submit Query", "Results", "Expert Review", "Agent Monitor"]
-    )
+    tab_query, tab_results, tab_review, tab_monitor = st.tabs([
+        "Query", "Results", "Review", "Monitor",
+    ])
 
-    with tab_submit:
-        render_submit_tab()
-
+    with tab_query:
+        render_query_tab()
     with tab_results:
         render_results_tab()
-
     with tab_review:
-        render_expert_review_tab()
-
+        render_review_tab()
     with tab_monitor:
         render_monitor_tab()
 

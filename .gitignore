@@ -38,3 +38,9 @@ data/reference/*.tsv
 reports/
 *.pdf
 *.html
+
+# Node / Next.js
+node_modules/
+frontend/.next/
+frontend/out/
+.next/
