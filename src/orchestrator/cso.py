@@ -35,6 +35,8 @@ from src.utils.types import (
     Task,
 )
 from src.divisions.base_lead import DivisionLead
+from src.orchestrator.hitl.router import ConfidenceRouter, HITLConfig, HITLResult
+from src.orchestrator.living_document.manager import DocumentManager
 
 logger = logging.getLogger("lumi.orchestrator.cso")
 
@@ -156,6 +158,7 @@ class CSOOrchestrator:
     def __init__(
         self,
         divisions: dict[str, DivisionLead] | None = None,
+        hitl_config: HITLConfig | None = None,
     ) -> None:
         """Initialise the CSO.
 
@@ -163,10 +166,16 @@ class CSOOrchestrator:
             divisions: Mapping of division_name -> DivisionLead.  If None,
                 the orchestrator still functions but skips analytical
                 execution (useful for testing planning logic).
+            hitl_config: Configuration for human-in-the-loop routing.
+                If None, uses defaults (enabled with standard thresholds).
         """
         self.divisions = divisions or {}
         self.llm = LLMClient()
         self._query_id: str = ""
+        self.hitl_config = hitl_config or HITLConfig()
+        self.hitl_router = ConfidenceRouter(config=self.hitl_config)
+        self.doc_manager: DocumentManager | None = None
+        self.hitl_result: HITLResult | None = None
 
     # ------------------------------------------------------------------
     # Main entry point
@@ -186,15 +195,20 @@ class CSOOrchestrator:
         logger.info("[CSO] Starting pipeline for query_id=%s", self._query_id)
 
         try:
+            # Initialize living document
+            self.doc_manager = DocumentManager(query_id=self._query_id)
+
             # Phase 1: Intake
             logger.info("[CSO] Phase 1 — Intake")
             research_brief = await self._intake(user_query)
+            await self.doc_manager.on_intake(research_brief)
 
             # Phase 2: Intelligence (imported lazily to avoid circular deps)
             logger.info("[CSO] Phase 2 — Intelligence briefing")
             from src.orchestrator.chief_of_staff import ChiefOfStaff
             intel = ChiefOfStaff()
             intel_brief = await intel.generate_briefing(research_brief)
+            await self.doc_manager.on_intelligence(intel_brief)
 
             # Phase 3: Planning
             logger.info("[CSO] Phase 3 — Planning")
@@ -218,6 +232,7 @@ class CSOOrchestrator:
             # Phase 5: Analytical execution
             logger.info("[CSO] Phase 5 — Analytical execution")
             analytical_reports = await self._execute_analytical(plan)
+            await self.doc_manager.on_analytical_complete(analytical_reports)
 
             # Phase 6: Design execution (if applicable)
             design_reports: list[DivisionReport] | None = None
@@ -230,6 +245,27 @@ class CSOOrchestrator:
             from src.orchestrator.review_panel import ReviewPanel
             reviewer = ReviewPanel()
             review_verdict = await reviewer.review(analytical_reports, design_reports)
+            await self.doc_manager.on_review(review_verdict)
+
+            # Phase 7.5: HITL — route low-confidence findings to humans
+            logger.info("[CSO] Phase 7.5 — Human-in-the-loop routing")
+            self.hitl_result = await self.hitl_router.evaluate_reports(
+                reports=analytical_reports,
+                query_id=self._query_id,
+            )
+            logger.info("[CSO] %s", self.hitl_result.summary())
+
+            if self.hitl_result.has_blocked:
+                logger.warning(
+                    "[CSO] %d findings blocked by HITL — excluded from report",
+                    len(self.hitl_result.blocked),
+                )
+
+            # Update living document with HITL results
+            await self.doc_manager.on_hitl_feedback(
+                human_feedback=self.hitl_result.human_feedback,
+                caveated_claims=self.hitl_result.caveated,
+            )
 
             # Phase 8: Refinement (if REVISE, max 3 cycles)
             refinement_cycles = 0
@@ -254,12 +290,20 @@ class CSOOrchestrator:
                 user_query, analytical_reports, design_reports, review_verdict
             )
 
+            # Update living document with final synthesis
+            await self.doc_manager.on_synthesis(report)
+
             # Attach metadata
             report.query_id = self._query_id
             report.user_query = user_query
             report.total_duration_seconds = time.time() - start_time
             report.total_cost = self.llm.get_cost()["total"]
             report.biosecurity_clearance = biosec_assessment
+
+            # Attach living document and HITL result
+            report.living_document_markdown = self.doc_manager.render()
+            if self.hitl_result:
+                report.hitl_summary = self.hitl_result.summary()
 
             logger.info(
                 "[CSO] Pipeline complete — query_id=%s  duration=%.1fs  cost=$%.4f",

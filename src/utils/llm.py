@@ -5,23 +5,21 @@ Provides:
 - ``LLMClient`` — stateful async client with tool-calling support,
   automatic retry with exponential backoff, and integrated cost tracking.
 - ``call_llm`` — simple one-shot helper kept for convenience.
+- ``ConcurrencyGate`` — shared semaphore + jitter to prevent API overload
+  when 15-30 agents call the API simultaneously.
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import random
 from collections import defaultdict
 from enum import Enum
 from typing import Any, Awaitable, Callable, Optional
 
 import anthropic
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
 
 logger = logging.getLogger("lumi.utils.llm")
 
@@ -59,6 +57,79 @@ _TASK_ROUTING: dict[str, ModelTier] = {
 
 
 # ---------------------------------------------------------------------------
+# Concurrency gate — prevents API overload from parallel agents
+# ---------------------------------------------------------------------------
+
+class ConcurrencyGate:
+    """Process-wide concurrency limiter for Anthropic API calls.
+
+    When 15-30 agents fire ``asyncio.gather`` simultaneously, they can
+    exceed API rate limits or cause connection pool exhaustion.  This
+    gate ensures at most ``max_concurrent`` requests are in-flight at
+    any time, with a small random jitter to desynchronise bursts.
+
+    Usage:
+        The gate is a module-level singleton (``_GLOBAL_GATE``).
+        ``LLMClient`` acquires it before every API call automatically.
+    """
+
+    def __init__(self, max_concurrent: int = 5, jitter_seconds: float = 0.5) -> None:
+        self.max_concurrent = max_concurrent
+        self.jitter_seconds = jitter_seconds
+        self._semaphore: asyncio.Semaphore | None = None
+        self._in_flight: int = 0
+        self._total_waited: float = 0.0
+
+    @property
+    def semaphore(self) -> asyncio.Semaphore:
+        """Lazy init — must be created inside a running event loop."""
+        if self._semaphore is None:
+            self._semaphore = asyncio.Semaphore(self.max_concurrent)
+        return self._semaphore
+
+    async def acquire(self) -> None:
+        """Acquire a slot, adding jitter if the gate is >50% utilised."""
+        if self._in_flight > self.max_concurrent // 2:
+            jitter = random.uniform(0.05, self.jitter_seconds)
+            self._total_waited += jitter
+            logger.debug(
+                "ConcurrencyGate: %d/%d in-flight, adding %.2fs jitter",
+                self._in_flight,
+                self.max_concurrent,
+                jitter,
+            )
+            await asyncio.sleep(jitter)
+
+        await self.semaphore.acquire()
+        self._in_flight += 1
+
+    def release(self) -> None:
+        """Release a slot back to the pool."""
+        self._in_flight -= 1
+        self.semaphore.release()
+
+    @property
+    def stats(self) -> dict[str, Any]:
+        return {
+            "max_concurrent": self.max_concurrent,
+            "in_flight": self._in_flight,
+            "total_jitter_waited": round(self._total_waited, 2),
+        }
+
+
+# Module-level singleton — shared by ALL LLMClient instances
+_GLOBAL_GATE = ConcurrencyGate(
+    max_concurrent=int(os.environ.get("LUMI_MAX_CONCURRENT_LLM", "2")),
+    jitter_seconds=float(os.environ.get("LUMI_LLM_JITTER", "1.5")),
+)
+
+
+def get_concurrency_gate() -> ConcurrencyGate:
+    """Return the process-wide concurrency gate (for monitoring/tuning)."""
+    return _GLOBAL_GATE
+
+
+# ---------------------------------------------------------------------------
 # Simple one-shot helper (kept for backward compatibility)
 # ---------------------------------------------------------------------------
 
@@ -80,7 +151,7 @@ async def call_llm(
             logger.warning("ANTHROPIC_API_KEY not set; returning placeholder response")
             return f"[LLM unavailable] Prompt was: {prompt[:200]}..."
 
-        client = anthropic.AsyncAnthropic(api_key=api_key)
+        client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0)
         messages = [{"role": "user", "content": prompt}]
         kwargs: dict[str, Any] = {
             "model": model,
@@ -115,7 +186,9 @@ class LLMClient:
     """
 
     def __init__(self) -> None:
-        self._client = anthropic.AsyncAnthropic()  # reads ANTHROPIC_API_KEY from env
+        # Disable SDK built-in retry — we handle retries ourselves in chat()
+        # with gate-aware backoff.  SDK retries fight our gate and cause storms.
+        self._client = anthropic.AsyncAnthropic(max_retries=0)
         self._total_cost: float = 0.0
         self._cost_by_model: dict[str, float] = defaultdict(float)
         self._call_count: int = 0
@@ -172,12 +245,6 @@ class LLMClient:
 
     # -- core chat ----------------------------------------------------------
 
-    @retry(
-        retry=retry_if_exception_type(anthropic.RateLimitError),
-        wait=wait_exponential(multiplier=1, min=1, max=60),
-        stop=stop_after_attempt(6),
-        reraise=True,
-    )
     async def chat(
         self,
         messages: list[dict[str, Any]],
@@ -189,8 +256,10 @@ class LLMClient:
     ) -> anthropic.types.Message:
         """Send a single chat request to the Anthropic API.
 
-        Includes automatic retry with exponential backoff for rate-limit
-        errors (up to 6 attempts).
+        Uses a global concurrency gate to limit in-flight requests,
+        then retries rate-limit errors with exponential backoff + jitter.
+        The gate is released *before* sleeping on retry so other agents
+        can use the slot while this one waits.
 
         Args:
             messages: Conversation messages in Anthropic format.
@@ -214,9 +283,33 @@ class LLMClient:
         if tools is not None:
             kwargs["tools"] = tools
 
-        response = await self._client.messages.create(**kwargs)
-        self._record_usage(model, response.usage)
-        return response
+        gate = _GLOBAL_GATE
+        last_exc: Exception | None = None
+
+        for attempt in range(1, 8):  # up to 7 attempts
+            await gate.acquire()
+            try:
+                response = await self._client.messages.create(**kwargs)
+                self._record_usage(model, response.usage)
+                return response
+            except anthropic.RateLimitError as exc:
+                last_exc = exc
+                if attempt < 7:
+                    # Exponential backoff with jitter: 4s, 8s, 16s, 32s, 60s, 60s
+                    base_wait = min(2 ** (attempt + 1), 60)
+                    wait = base_wait + random.uniform(0, base_wait * 0.5)
+                    logger.warning(
+                        "Rate limited (attempt %d/7, %d in-flight). "
+                        "Waiting %.1fs before retry...",
+                        attempt,
+                        gate._in_flight,
+                        wait,
+                    )
+                    await asyncio.sleep(wait)
+            finally:
+                gate.release()
+
+        raise last_exc  # type: ignore[misc]
 
     # -- tool-use loop ------------------------------------------------------
 

@@ -15,18 +15,16 @@ import json
 import logging
 import textwrap
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from src.agents.base_agent import BaseAgent
-from src.utils.llm import LLMClient, ModelTier
+from src.utils.llm import ModelTier
 from src.utils.types import (
     AgentResult,
-    Claim,
     ConfidenceAssessment,
     ConfidenceLevel,
     DivisionReport,
     Task,
-    TaskStatus,
 )
 
 logger = logging.getLogger("lumi.divisions.base_lead")
@@ -161,7 +159,7 @@ class DivisionLead(BaseAgent):
             if json_text.startswith("```"):
                 # Remove fences
                 lines = json_text.split("\n")
-                lines = [l for l in lines if not l.strip().startswith("```")]
+                lines = [ln for ln in lines if not ln.strip().startswith("```")]
                 json_text = "\n".join(lines)
 
             sub_task_defs: list[dict[str, Any]] = json.loads(json_text)
@@ -214,8 +212,9 @@ class DivisionLead(BaseAgent):
         """Execute sub-tasks respecting dependency ordering.
 
         Tasks whose ``dependencies`` list is empty (or whose deps are
-        already satisfied) are launched in parallel via ``asyncio.gather``.
-        The process repeats until all tasks have been executed.
+        already satisfied) are launched with staggered starts to avoid
+        overwhelming the API.  Each specialist starts after a short delay
+        from the previous one, but they still run concurrently.
         """
         results: list[AgentResult] = []
         completed_ids: set[str] = set()
@@ -242,8 +241,18 @@ class DivisionLead(BaseAgent):
                 ready = still_waiting
                 still_waiting = []
 
-            # Execute all ready tasks in parallel
-            coros = [self._run_specialist(t) for t in ready]
+            # Stagger specialist launches: create tasks with increasing
+            # delays so they don't all hit the API at the same instant
+            async def _staggered_run(task: Task, delay: float) -> AgentResult:
+                if delay > 0:
+                    await asyncio.sleep(delay)
+                return await self._run_specialist(task)
+
+            stagger_interval = 3.0  # seconds between each specialist start
+            coros = [
+                _staggered_run(t, i * stagger_interval)
+                for i, t in enumerate(ready)
+            ]
             batch_results = await asyncio.gather(*coros, return_exceptions=True)
 
             for task_obj, result in zip(ready, batch_results):
