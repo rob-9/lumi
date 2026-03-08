@@ -23,6 +23,10 @@ dependencies = [
     "matplotlib>=3.8.0",
     "plotly>=5.18.0",
 
+    # MCP client (figure generation via AntV)
+    "mcp>=1.0.0",
+    "httpx-sse>=0.4.0",
+
     # UI
     "streamlit>=1.40.0",
 

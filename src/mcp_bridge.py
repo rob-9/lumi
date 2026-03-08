@@ -168,6 +168,31 @@ try:
 except ImportError:
     logger.warning("Metabolic MCP server not available (missing cobra?)")
 
+# -- BioRender / Figure Generation (requires mcp + Node.js -- optional) -
+_HAS_BIORENDER = False
+try:
+    from src.mcp_servers.biorender.server import (
+        generate_volcano_plot,
+        generate_expression_heatmap,
+        generate_pathway_diagram,
+        generate_target_comparison_radar,
+        generate_gene_expression_bar,
+        generate_drug_target_sankey,
+        generate_pipeline_flow,
+        generate_moa_diagram,
+        generate_literature_wordcloud,
+        generate_confidence_distribution,
+        generate_clinical_timeline,
+        generate_category_pie,
+        generate_venn_diagram,
+        search_biorender_icons,
+        search_biorender_templates,
+        download_figure,
+    )
+    _HAS_BIORENDER = True
+except ImportError:
+    logger.warning("BioRender MCP server not available (missing mcp package or Node.js?)")
+
 # -- Cheminformatics (requires RDKit -- optional) ----------------------
 _HAS_CHEM = False
 try:
@@ -300,6 +325,27 @@ if _HAS_METABOLIC:
         "get_model_reactions": get_model_reactions,
         "optimize_codons": optimize_codons,
         "predict_expression_level": predict_expression_level,
+    })
+
+# --- BioRender / Figure Generation (conditional) ---
+if _HAS_BIORENDER:
+    TOOL_REGISTRY.update({
+        "generate_volcano_plot": generate_volcano_plot,
+        "generate_expression_heatmap": generate_expression_heatmap,
+        "generate_pathway_diagram": generate_pathway_diagram,
+        "generate_target_comparison_radar": generate_target_comparison_radar,
+        "generate_gene_expression_bar": generate_gene_expression_bar,
+        "generate_drug_target_sankey": generate_drug_target_sankey,
+        "generate_pipeline_flow": generate_pipeline_flow,
+        "generate_moa_diagram": generate_moa_diagram,
+        "generate_literature_wordcloud": generate_literature_wordcloud,
+        "generate_confidence_distribution": generate_confidence_distribution,
+        "generate_clinical_timeline": generate_clinical_timeline,
+        "generate_category_pie": generate_category_pie,
+        "generate_venn_diagram": generate_venn_diagram,
+        "search_biorender_icons": search_biorender_icons,
+        "search_biorender_templates": search_biorender_templates,
+        "download_figure": download_figure,
     })
 
 # --- Cheminformatics (conditional) ---
