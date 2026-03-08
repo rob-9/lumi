@@ -1,25 +1,25 @@
 # Lumi
 
-Multi-agent virtual lab for drug discovery. Specialist AI agents debate across biology, chemistry, and clinical domains to produce confidence-scored findings with human-in-the-loop routing.
+Multi-agent virtual lab for drug discovery. A 9-phase orchestration pipeline coordinates specialist AI agents across biology, chemistry, and clinical domains to produce confidence-scored findings with biosecurity veto gates, adversarial review, and human-in-the-loop routing.
 
 ## How it works
 
-1. Submit a research question to a **sublab** (target validation, lead optimization, etc.)
-2. The sublab's agent team queries literature, databases, and computational tools
-3. Multi-agent debate produces consensus findings with confidence scores
-4. Low-confidence findings route to human experts for review
-5. Final report combines figures, confidence data, and provenance trails
+1. Submit a research question via the Streamlit UI or pipeline API
+2. **CSO** (Opus) plans the investigation; **ChiefOfStaff** (Haiku) briefs on the landscape
+3. **BiosecurityOfficer** (Sonnet) screens for dual-use risk — RED = hard veto
+4. Division leads dispatch tasks to 17 specialist agents backed by MCP tool servers
+5. **ReviewPanel** (Sonnet) runs adversarial 3-pass review with up to 3 refinement cycles
+6. **WorldModel** persists findings across sessions; final report includes confidence + provenance
 
-## Sublabs
+## Architecture
 
-| Sublab | Purpose |
-|--------|---------|
-| Target Validation | Evidence dossiers with pathway diagrams |
-| Assay Troubleshooting | Root-cause analysis of unexpected results |
-| Biomarker Curation | Panel candidates with expression heatmaps |
-| Regulatory Submissions | Tox literature reviews with MoA illustrations |
-| Lead Optimization | Multi-parameter drug candidate optimization |
-| Clinical Translation | Go/no-go packages for IND-enabling studies |
+**Tier 1 — Orchestration**: CSOOrchestrator, ChiefOfStaff, BiosecurityOfficer, ReviewPanel, WorldModel
+
+**Tier 2 — Divisions** (8): Target ID · Target Safety · Modality · Molecular Design · Clinical · CompBio · Experimental · Biosecurity
+
+**Tier 3 — Specialist Agents** (17): statistical_genetics, functional_genomics, single_cell_atlas, bio_pathways, fda_safety, toxicogenomics, target_biologist, pharmacologist, protein_intelligence, antibody_engineer, structure_design, lead_optimization, developability, clinical_trialist, literature_synthesis, assay_design, dual_use_screening
+
+**Domain Engines**: Biosecurity Engine (5-screen screening) · Yami Simulator (protein intelligence) · Virtual Cell (metabolic modeling)
 
 ## Setup
 
@@ -33,17 +33,22 @@ pip install -e ".[dev]"           # dev tools
 
 ```
 src/
-  agents/       # Specialist agents
-  sublabs/      # Sublab definitions (agents, tools, debate protocol)
-  divisions/    # Division leads coordinating agent groups
-  utils/        # Confidence scoring, LLM helpers, provenance
-  factory.py    # System factory
-  mcp_bridge.py # MCP tool server bridge
+  orchestrator/          # CSO, ChiefOfStaff, ReviewPanel, BiosecurityOfficer, WorldModel
+  divisions/             # 8 division leads coordinating agent groups
+  agents/                # 17 specialist agents + base class
+  biosecurity_engine/    # 5-screen biosecurity screening pipeline
+  yami_simulator/        # Protein intelligence (ESM-2, AlphaFold)
+  virtual_cell/          # Metabolic modeling (COBRApy)
+  mcp_servers/           # MCP tool servers (genomics, protein, clinical, etc.)
+  utils/                 # Confidence scoring, LLM client, provenance, types
+  factory.py             # System factory — wires agents, divisions, MCP bridge
+  mcp_bridge.py          # Master tool registry
+app.py                   # Streamlit UI
 ```
 
 ## Stack
 
-Python 3.11+ · Claude (anthropic SDK) · FastMCP v3 · Streamlit
+Python 3.11+ · Claude Opus/Sonnet/Haiku (anthropic SDK) · FastMCP v3 · Streamlit · SQLite (WorldModel)
 
 ## Dev
 
