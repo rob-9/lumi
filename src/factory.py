@@ -65,7 +65,81 @@ from src.divisions import (
     create_biosecurity_lead,
 )
 
+from src.sublabs import (
+    Sublab,
+    TargetValidationSublab,
+    AssayTroubleshootingSublab,
+    BiomarkerCurationSublab,
+    RegulatorySubmissionsSublab,
+    LeadOptimizationSublab,
+    ClinicalTranslationSublab,
+)
+
 logger = logging.getLogger("lumi.factory")
+
+# Mapping of sublab name -> sublab class
+SUBLAB_REGISTRY: dict[str, type[Sublab]] = {
+    "Target Validation": TargetValidationSublab,
+    "Assay Troubleshooting": AssayTroubleshootingSublab,
+    "Biomarker Curation": BiomarkerCurationSublab,
+    "Regulatory Submissions": RegulatorySubmissionsSublab,
+    "Lead Optimization": LeadOptimizationSublab,
+    "Clinical Translation": ClinicalTranslationSublab,
+}
+
+
+def create_sublab(
+    name: str,
+    divisions: dict[str, DivisionLead] | None = None,
+) -> Sublab:
+    """Create a sublab instance by name.
+
+    Args:
+        name: Sublab name (must match a key in :data:`SUBLAB_REGISTRY`).
+        divisions: Optional pre-built divisions dict.  If None, calls
+            :func:`create_system` to build the full agent swarm first.
+
+    Returns:
+        A fully wired :class:`Sublab` instance.
+
+    Raises:
+        ValueError: If *name* is not a registered sublab.
+    """
+    if name not in SUBLAB_REGISTRY:
+        raise ValueError(
+            f"Unknown sublab '{name}'. Available: {list(SUBLAB_REGISTRY.keys())}"
+        )
+
+    if divisions is None:
+        divisions = create_system()
+
+    sublab_cls = SUBLAB_REGISTRY[name]
+    sublab = sublab_cls(divisions=divisions)
+    logger.info("Created sublab '%s' with %d agents", name, len(sublab.agents))
+    return sublab
+
+
+def create_all_sublabs(
+    divisions: dict[str, DivisionLead] | None = None,
+) -> dict[str, Sublab]:
+    """Create all registered sublabs.
+
+    Args:
+        divisions: Optional pre-built divisions dict.  If None, calls
+            :func:`create_system` once and shares it across all sublabs.
+
+    Returns:
+        A dict mapping sublab names to :class:`Sublab` instances.
+    """
+    if divisions is None:
+        divisions = create_system()
+
+    sublabs = {}
+    for name, cls in SUBLAB_REGISTRY.items():
+        sublabs[name] = cls(divisions=divisions)
+        logger.info("Created sublab '%s' with %d agents", name, len(sublabs[name].agents))
+
+    return sublabs
 
 
 def create_system() -> dict[str, DivisionLead]:

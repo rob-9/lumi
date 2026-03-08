@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 
 import streamlit as st
 
+from src.factory import SUBLAB_REGISTRY
+from src.sublabs.base import Sublab
 from src.utils.types import (
     AgentResult,
     Claim,
@@ -26,71 +28,17 @@ from src.utils.types import (
 )
 
 # ---------------------------------------------------------------------------
-# Constants
+# Constants -- derived from sublab class definitions
 # ---------------------------------------------------------------------------
 
-SUBLABS: dict[str, dict] = {
-    "Target Validation": {
-        "description": "Evidence dossiers with pathway diagrams and confidence scores",
-        "agents": ["target_biologist", "bio_pathways", "literature_synthesis", "fda_safety"],
-        "divisions": ["Target Identification", "Target Safety", "Computational Biology"],
-        "examples": [
-            "Evaluate BRCA1 as a therapeutic target for triple-negative breast cancer",
-            "Assess PCSK9 inhibition safety profile based on genetic evidence",
-            "Validate KRAS G12C as a druggable target in non-small cell lung cancer",
-        ],
-    },
-    "Assay Troubleshooting": {
-        "description": "Root-cause analysis of unexpected experimental results",
-        "agents": ["assay_design", "functional_genomics", "single_cell_atlas"],
-        "divisions": ["Experimental Design", "Target Identification"],
-        "examples": [
-            "Why is my ELISA showing high background in serum samples?",
-            "Troubleshoot low transfection efficiency in HEK293 cells",
-            "Diagnose inconsistent IC50 values across plate replicates",
-        ],
-    },
-    "Biomarker Curation": {
-        "description": "Panel candidates with expression heatmaps",
-        "agents": ["statistical_genetics", "single_cell_atlas", "clinical_trialist"],
-        "divisions": ["Target Identification", "Clinical Intelligence"],
-        "examples": [
-            "Identify circulating biomarkers for early pancreatic cancer detection",
-            "Curate a pharmacodynamic biomarker panel for JAK inhibitor response",
-            "Find predictive biomarkers for immune checkpoint inhibitor response",
-        ],
-    },
-    "Regulatory Submissions": {
-        "description": "Tox literature reviews with MoA illustrations",
-        "agents": ["toxicogenomics", "pharmacologist", "fda_safety", "literature_synthesis"],
-        "divisions": ["Target Safety", "Computational Biology", "Clinical Intelligence"],
-        "examples": [
-            "Prepare a nonclinical toxicology summary for an anti-CD20 antibody",
-            "Review hepatotoxicity signals for kinase inhibitor class",
-            "Compile mechanism-of-action safety assessment for bispecific antibody",
-        ],
-    },
-    "Lead Optimization": {
-        "description": "Multi-parameter optimization of drug candidates",
-        "agents": ["lead_optimization", "antibody_engineer", "developability", "structure_design"],
-        "divisions": ["Molecular Design", "Modality Selection"],
-        "examples": [
-            "Optimize a lead compound for improved oral bioavailability and reduced hERG liability",
-            "Improve thermostability of anti-HER2 antibody without losing affinity",
-            "Design selective kinase inhibitor with improved metabolic stability",
-        ],
-    },
-    "Clinical Translation": {
-        "description": "Go/no-go evidence packages for IND-enabling studies",
-        "agents": ["clinical_trialist", "pharmacologist", "statistical_genetics", "fda_safety"],
-        "divisions": ["Clinical Intelligence", "Target Safety", "Computational Biology"],
-        "examples": [
-            "Build go/no-go evidence package for anti-IL-17 antibody IND filing",
-            "Assess clinical translatability of preclinical efficacy data for NASH target",
-            "Evaluate first-in-human dose selection strategy for bispecific T-cell engager",
-        ],
-    },
-}
+SUBLABS: dict[str, dict] = {}
+for _name, _cls in SUBLAB_REGISTRY.items():
+    SUBLABS[_name] = {
+        "description": _cls.description,
+        "agents": _cls.agent_names,
+        "divisions": _cls.division_names,
+        "examples": _cls.examples,
+    }
 
 # All agents in the system, grouped by division
 AGENTS_BY_DIVISION: dict[str, list[str]] = {
