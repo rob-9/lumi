@@ -39,6 +39,7 @@ from src.divisions.base_lead import DivisionLead
 from src.orchestrator.hitl.router import ConfidenceRouter, HITLConfig, HITLResult
 from src.orchestrator.living_document.manager import DocumentManager
 from src.orchestrator.stream_events import PipelineEventEmitter
+from src.reports.figure_collector import collect_figures
 
 logger = logging.getLogger("lumi.orchestrator.cso")
 
@@ -885,6 +886,12 @@ class CSOOrchestrator:
             )
             synthesis = self._parse_json_response(text)
 
+            # Collect figures from all division reports
+            all_divisions = list(analytical)
+            if design:
+                all_divisions.extend(design)
+            figures = collect_figures(all_divisions)
+
             return FinalReport(
                 query_id=self._query_id,
                 user_query=query,
@@ -900,6 +907,7 @@ class CSOOrchestrator:
                 ),
                 limitations=synthesis.get("limitations", []),
                 provenance_chain=all_evidence[:50],  # Top 50 sources
+                figures=figures,
             )
 
         except Exception as exc:

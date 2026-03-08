@@ -165,6 +165,7 @@ class BaseAgent:
             {"role": "user", "content": self._format_task(task)}
         ]
         tools_used: list[str] = []
+        tool_results_log: list[dict[str, Any]] = []
         code_executed: list[str] = []
         steps = 0
 
@@ -207,6 +208,13 @@ class BaseAgent:
                     except Exception as exc:
                         result = {"error": str(exc)}
 
+                    # Log tool result for figure collection
+                    if isinstance(result, dict) and not result.get("error"):
+                        tool_results_log.append({
+                            "tool_name": tool_name,
+                            "result": result,
+                        })
+
                     # Stream tool call event
                     if on_tool_call is not None:
                         tool_dur = int((time.time() - tool_start) * 1000)
@@ -245,7 +253,10 @@ class BaseAgent:
                     agent_id=self.name,
                     task_id=task.task_id,
                     findings=self._extract_findings(final_text),
-                    raw_data={"final_response": final_text},
+                    raw_data={
+                        "final_response": final_text,
+                        "tool_results": tool_results_log,
+                    },
                     code_executed=code_executed,
                     tools_used=list(set(tools_used)),
                     cost=self.llm.get_cost()["total"],
@@ -262,6 +273,7 @@ class BaseAgent:
             raw_data={
                 "warning": "Max steps exceeded",
                 "last_messages": str(messages[-2:]),
+                "tool_results": tool_results_log,
             },
             code_executed=code_executed,
             tools_used=list(set(tools_used)),
