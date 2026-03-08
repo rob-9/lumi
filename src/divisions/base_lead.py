@@ -248,7 +248,7 @@ class DivisionLead(BaseAgent):
                     await asyncio.sleep(delay)
                 return await self._run_specialist(task)
 
-            stagger_interval = 2.0  # seconds between each specialist start
+            stagger_interval = 3.0  # seconds between each specialist start
             coros = [
                 _staggered_run(t, i * stagger_interval)
                 for i, t in enumerate(ready)

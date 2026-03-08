@@ -119,8 +119,8 @@ class ConcurrencyGate:
 
 # Module-level singleton — shared by ALL LLMClient instances
 _GLOBAL_GATE = ConcurrencyGate(
-    max_concurrent=int(os.environ.get("LUMI_MAX_CONCURRENT_LLM", "3")),
-    jitter_seconds=float(os.environ.get("LUMI_LLM_JITTER", "1.0")),
+    max_concurrent=int(os.environ.get("LUMI_MAX_CONCURRENT_LLM", "2")),
+    jitter_seconds=float(os.environ.get("LUMI_LLM_JITTER", "1.5")),
 )
 
 
@@ -151,7 +151,7 @@ async def call_llm(
             logger.warning("ANTHROPIC_API_KEY not set; returning placeholder response")
             return f"[LLM unavailable] Prompt was: {prompt[:200]}..."
 
-        client = anthropic.AsyncAnthropic(api_key=api_key)
+        client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0)
         messages = [{"role": "user", "content": prompt}]
         kwargs: dict[str, Any] = {
             "model": model,
@@ -186,7 +186,9 @@ class LLMClient:
     """
 
     def __init__(self) -> None:
-        self._client = anthropic.AsyncAnthropic()  # reads ANTHROPIC_API_KEY from env
+        # Disable SDK built-in retry — we handle retries ourselves in chat()
+        # with gate-aware backoff.  SDK retries fight our gate and cause storms.
+        self._client = anthropic.AsyncAnthropic(max_retries=0)
         self._total_cost: float = 0.0
         self._cost_by_model: dict[str, float] = defaultdict(float)
         self._call_count: int = 0
@@ -293,8 +295,8 @@ class LLMClient:
             except anthropic.RateLimitError as exc:
                 last_exc = exc
                 if attempt < 7:
-                    # Exponential backoff with jitter: 2s, 4s, 8s, 16s, 32s, 60s
-                    base_wait = min(2 ** attempt, 60)
+                    # Exponential backoff with jitter: 4s, 8s, 16s, 32s, 60s, 60s
+                    base_wait = min(2 ** (attempt + 1), 60)
                     wait = base_wait + random.uniform(0, base_wait * 0.5)
                     logger.warning(
                         "Rate limited (attempt %d/7, %d in-flight). "
