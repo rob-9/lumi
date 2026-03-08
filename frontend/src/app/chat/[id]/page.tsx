@@ -5,16 +5,18 @@ import { api } from "@/lib/api";
 import type { Chat, Message, AgentTrace, HitlRequest, IntegrationCall } from "@/lib/types";
 import { ChatList } from "@/components/chat/chat-list";
 import { ChatMessage } from "@/components/chat/message";
-import { AgentTraceCard } from "@/components/chat/agent-trace";
+import { AgentActivityGroup } from "@/components/chat/agent-activity-group";
 import { HitlCard } from "@/components/chat/hitl-card";
 import { IntegrationCard } from "@/components/chat/integration-card";
 import { AgentsPanel } from "@/components/panels/agents-panel";
 import { PlanPanel } from "@/components/panels/plan-panel";
 import { ToolsPanel } from "@/components/panels/tools-panel";
-import { Send, PanelRightOpen, PanelRightClose } from "lucide-react";
+import { Send, PanelRightOpen, PanelRightClose, FlaskConical } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import clsx from "clsx";
 
-type RightTab = "agents" | "plan" | "tools";
+type RightTab = "plan" | "agents" | "tools";
 
 type LiveEvent =
   | { kind: "trace"; trace: AgentTrace }
@@ -31,7 +33,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [streamText, setStreamText] = useState("");
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const [liveTraces, setLiveTraces] = useState<AgentTrace[]>([]);
-  const [rightTab, setRightTab] = useState<RightTab>("agents");
+  const [rightTab, setRightTab] = useState<RightTab>("plan");
   const [rightOpen, setRightOpen] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -59,11 +61,29 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     setLiveEvents([]);
     setLiveTraces([]);
 
+    try {
     for await (const event of api.sendMessage(chatId, content)) {
+      console.log("[SSE]", event.type, event);
       switch (event.type) {
         case "trace_start":
           setLiveTraces((prev) => [...prev, event.trace]);
           setLiveEvents((prev) => [...prev, { kind: "trace", trace: event.trace }]);
+          break;
+        case "tool_call":
+          setLiveTraces((prev) =>
+            prev.map((t) =>
+              t.agent_id === event.agent_id
+                ? { ...t, tools_called: [...t.tools_called, event.tool] }
+                : t
+            )
+          );
+          setLiveEvents((prev) =>
+            prev.map((e) =>
+              e.kind === "trace" && e.trace.agent_id === event.agent_id
+                ? { kind: "trace", trace: { ...e.trace, tools_called: [...e.trace.tools_called, event.tool] } }
+                : e
+            )
+          );
           break;
         case "trace_complete":
           setLiveTraces((prev) =>
@@ -83,7 +103,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         case "hitl_resolved":
           setLiveEvents((prev) =>
             prev.map((e) =>
-              e.kind === "hitl_flag" ? { kind: "hitl_resolved", hitl: event.hitl } : e
+              e.kind === "hitl_flag" && e.hitl.agent_id === event.hitl.agent_id
+                ? { kind: "hitl_resolved", hitl: event.hitl }
+                : e
             )
           );
           break;
@@ -97,13 +119,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           const updated = await api.getChat(chatId);
           setChat(updated);
           setStreamText("");
-          setLiveEvents([]);
-          setLiveTraces([]);
           setStreaming(false);
           api.listChats().then(setChats);
           break;
         }
       }
+    }
+    } catch (err) {
+      console.error("[SSE] Stream error:", err);
+      setStreaming(false);
     }
   }, [chatId]);
 
@@ -125,6 +149,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     setChat((prev) => prev ? { ...prev, messages: [...prev.messages, userMsg] } : prev);
     await runStream(text);
   }
+
+  // Separate live events by kind for rendering
+  const liveTracesFromEvents = liveEvents
+    .filter((e): e is Extract<LiveEvent, { kind: "trace" }> => e.kind === "trace")
+    .map((e) => e.trace);
+  const liveHitlEvents = liveEvents.filter(
+    (e): e is Extract<LiveEvent, { kind: "hitl_flag" | "hitl_resolved" }> =>
+      e.kind === "hitl_flag" || e.kind === "hitl_resolved"
+  );
+  const liveIntegrationEvents = liveEvents.filter(
+    (e): e is Extract<LiveEvent, { kind: "integration" }> => e.kind === "integration"
+  );
 
   if (!chat) {
     return (
@@ -174,35 +210,67 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             <ChatMessage key={msg.id} message={msg} index={i} />
           ))}
 
-          {/* Live streaming events */}
-          {streaming && liveEvents.length > 0 && (
-            <div className="space-y-2">
-              {liveEvents.map((event, i) => {
-                switch (event.kind) {
-                  case "trace":
-                    return <AgentTraceCard key={`t-${event.trace.agent_id}`} trace={event.trace} index={i} />;
-                  case "hitl_flag":
-                    return <HitlCard key={`h-${i}`} hitl={event.hitl} />;
-                  case "hitl_resolved":
-                    return <HitlCard key={`hr-${i}`} hitl={event.hitl} />;
-                  case "integration":
-                    return <IntegrationCard key={`i-${i}`} call={event.call} />;
-                }
-              })}
-            </div>
-          )}
+          {/* Live streaming — assistant message layout */}
+          {streaming && (
+            <div className="msg-assistant animate-fade-in">
+              <div className="msg-assistant-avatar">
+                <FlaskConical size={14} />
+              </div>
 
-          {/* Streaming text */}
-          {streaming && streamText && (
-            <div className="rounded-xl bg-[var(--bg-card)] border border-[var(--border)] px-5 py-4 shadow-sm animate-scale-in">
-              <div className="chat-markdown text-sm whitespace-pre-wrap">{streamText}</div>
-              <div className="mt-3 flex items-center gap-2">
-                <span className="flex gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] typing-dot" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] typing-dot" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] typing-dot" />
-                </span>
-                <span className="text-xs text-[var(--text-muted)]">Synthesizing report...</span>
+              <div className={clsx("msg-assistant-content space-y-3", streamText && "streaming-indicator")}>
+                {/* Thinking indicator */}
+                {liveEvents.length === 0 && !streamText && (
+                  <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                    <span className="flex gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] typing-dot" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] typing-dot" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] typing-dot" />
+                    </span>
+                    Thinking...
+                  </div>
+                )}
+
+                {/* Agent traces — grouped by division */}
+                {liveTracesFromEvents.length > 0 && (
+                  <AgentActivityGroup traces={liveTracesFromEvents} isLive />
+                )}
+
+                {/* HITL events */}
+                {liveHitlEvents.length > 0 && (
+                  <div className="space-y-2">
+                    {liveHitlEvents.map((e, i) => (
+                      <HitlCard key={`h-${i}`} hitl={e.hitl} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Integration events */}
+                {liveIntegrationEvents.length > 0 && (
+                  <div className="space-y-2">
+                    {liveIntegrationEvents.map((e, i) => (
+                      <IntegrationCard key={`i-${i}`} call={e.call} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Streaming markdown */}
+                {streamText && (
+                  <div className="chat-markdown text-sm">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamText}</ReactMarkdown>
+                  </div>
+                )}
+
+                {/* Typing indicator while streaming text */}
+                {streamText && (
+                  <div className="flex items-center gap-2">
+                    <span className="flex gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] typing-dot" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] typing-dot" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] typing-dot" />
+                    </span>
+                    <span className="text-xs text-[var(--text-muted)]">Synthesizing report...</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -236,7 +304,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </main>
 
-      {/* Right panel — animated slide */}
+      {/* Right panel */}
       <aside
         className={clsx(
           "shrink-0 border-l border-[var(--border)] bg-[var(--bg-card)] flex flex-col transition-all duration-300 ease-out overflow-hidden",
@@ -245,7 +313,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       >
         <div className="w-80 flex flex-col h-full">
           <div className="flex border-b border-[var(--border)]">
-            {(["agents", "plan", "tools"] as RightTab[]).map((tab) => (
+            {(["plan", "agents", "tools"] as RightTab[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setRightTab(tab)}
@@ -261,8 +329,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             ))}
           </div>
           <div className="flex-1 overflow-y-auto p-4">
+            {rightTab === "plan" && <PlanPanel liveTraces={liveTraces} streaming={streaming} />}
             {rightTab === "agents" && <AgentsPanel sublab={chat.sublab} liveTraces={liveTraces} />}
-            {rightTab === "plan" && <PlanPanel />}
             {rightTab === "tools" && <ToolsPanel />}
           </div>
         </div>

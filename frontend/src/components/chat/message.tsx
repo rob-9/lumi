@@ -1,10 +1,10 @@
 import type { Message } from "@/lib/types";
-import { AgentTraceCard } from "./agent-trace";
+import { AgentActivityGroup } from "./agent-activity-group";
 import { HitlCard } from "./hitl-card";
 import { IntegrationCard } from "./integration-card";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import clsx from "clsx";
+import { FlaskConical } from "lucide-react";
 
 interface Props {
   message: Message;
@@ -14,33 +14,33 @@ interface Props {
 export function ChatMessage({ message, index = 0 }: Props) {
   const isUser = message.role === "user";
 
+  if (isUser) {
+    return (
+      <div
+        className="msg-user animate-slide-up"
+        style={{ animationDelay: `${index * 60}ms` }}
+      >
+        <div className="msg-bubble">
+          <p className="text-sm leading-relaxed text-[var(--text)]">{message.content}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className="flex gap-3 animate-slide-up"
+      className="msg-assistant animate-slide-up"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      {/* Label */}
-      <div className="w-12 shrink-0 pt-0.5">
-        <p className={clsx(
-          "text-xs font-medium",
-          isUser ? "text-[var(--text-muted)]" : "text-[var(--accent)]"
-        )}>
-          {isUser ? "You" : "Lumi"}
-        </p>
+      <div className="msg-assistant-avatar">
+        <FlaskConical size={14} />
       </div>
 
-      {/* Content */}
-      <div className="min-w-0 flex-1 space-y-3">
-        {/* Agent traces */}
+      <div className="msg-assistant-content space-y-3">
         {message.agent_traces.length > 0 && (
-          <div className="space-y-2">
-            {message.agent_traces.map((trace, i) => (
-              <AgentTraceCard key={trace.agent_id} trace={trace} index={i} />
-            ))}
-          </div>
+          <AgentActivityGroup traces={message.agent_traces} />
         )}
 
-        {/* HITL events */}
         {message.hitl_events?.length > 0 && (
           <div className="space-y-2">
             {message.hitl_events.map((hitl, i) => (
@@ -49,7 +49,6 @@ export function ChatMessage({ message, index = 0 }: Props) {
           </div>
         )}
 
-        {/* Integration events */}
         {message.integration_events?.length > 0 && (
           <div className="space-y-2">
             {message.integration_events.map((call, i) => (
@@ -58,10 +57,7 @@ export function ChatMessage({ message, index = 0 }: Props) {
           </div>
         )}
 
-        {/* Text */}
-        {isUser ? (
-          <p className="text-sm leading-relaxed">{message.content}</p>
-        ) : (
+        {message.content && (
           <div className="chat-markdown text-sm">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
           </div>

@@ -318,3 +318,27 @@ def create_system() -> dict[str, DivisionLead]:
 
     logger.info("All %d divisions created and populated", len(divisions))
     return divisions
+
+
+def create_minimal_system() -> dict[str, DivisionLead]:
+    """Create a minimal system with only the Biosecurity division.
+
+    Used by the dynamic SubLab pipeline, which composes its own agents
+    but still needs the biosecurity veto gate (Phase 4).
+
+    Returns:
+        A dict with a single ``"Biosecurity"`` division.
+    """
+    logger.info("Creating minimal system (biosecurity only) for dynamic mode...")
+
+    dual_use = create_dual_use_screening_agent()
+    wire_agent_tools(dual_use)
+
+    divisions: dict[str, DivisionLead] = {
+        "Biosecurity": create_biosecurity_lead(
+            specialist_agents=[dual_use],
+        ),
+    }
+
+    logger.info("Minimal system created with biosecurity division")
+    return divisions

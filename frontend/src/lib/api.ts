@@ -1,6 +1,8 @@
 import type { Chat, SublabInfo, AgentInfo, ToolInfo, IntegrationInfo, StreamEvent } from "./types";
 
 const BASE = "/api";
+// SSE streams must bypass Next.js rewrite proxy (it buffers the response).
+const SSE_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api";
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`);
@@ -30,7 +32,7 @@ export const api = {
   createChat: (sublab: string, message: string) => post<Chat>("/chats", { sublab, message }),
 
   sendMessage: async function* (chatId: string, content: string): AsyncGenerator<StreamEvent> {
-    const res = await fetch(`${BASE}/chats/${chatId}/messages`, {
+    const res = await fetch(`${SSE_BASE}/chats/${chatId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),

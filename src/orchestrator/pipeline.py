@@ -34,6 +34,8 @@ _DEFAULT_WM_PATH = "data/world_model.db"
 async def run_yohas_pipeline(
     user_query: str,
     divisions: dict[str, DivisionLead] | None = None,
+    dynamic: bool = False,
+    sublab_hint: str | None = None,
     world_model_path: str = _DEFAULT_WM_PATH,
     cost_ceiling: float = 100.0,
     enable_world_model: bool = True,
@@ -53,6 +55,12 @@ async def run_yohas_pipeline(
         user_query: The natural-language research query from the user.
         divisions: Optional mapping of division_name -> DivisionLead.
             If None, the CSO operates in planning-only mode.
+        dynamic: When True, the orchestrator dynamically composes agent
+            teams from the tool catalog instead of using the static
+            17-agent roster. The full ``create_system()`` is not needed;
+            only the biosecurity division is created for the veto gate.
+        sublab_hint: Optional hint for the SubLab planner (used as
+            context, not constraint). Only used when ``dynamic=True``.
         world_model_path: Path to the SQLite world model database.
         cost_ceiling: Maximum allowed spend in USD. Pipeline will not
             start if ceiling is already exceeded.
@@ -119,7 +127,25 @@ async def run_yohas_pipeline(
     # ------------------------------------------------------------------
 
     try:
-        cso = CSOOrchestrator(divisions=divisions)
+        # Build tool catalog for dynamic mode
+        tool_catalog = None
+        if dynamic:
+            from src.mcp_bridge import build_tool_catalog
+            tool_catalog = build_tool_catalog()
+            logger.info(
+                "[Pipeline] Dynamic mode: tool catalog with %d tools",
+                len(tool_catalog),
+            )
+            # In dynamic mode, only create biosecurity division if not provided
+            if divisions is None:
+                from src.factory import create_minimal_system
+                divisions = create_minimal_system()
+
+        cso = CSOOrchestrator(
+            divisions=divisions,
+            tool_catalog=tool_catalog,
+            sublab_hint=sublab_hint,
+        )
         report = await cso.run(user_query)
 
     except Exception as exc:

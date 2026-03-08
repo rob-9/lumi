@@ -20,7 +20,7 @@ Usage::
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
+from typing import Any, Callable, TypedDict
 
 from src.agents.base_agent import BaseAgent
 
@@ -646,6 +646,213 @@ if _HAS_CHEM:
         "search_zinc": search_zinc,
         "convert_molecule": convert_molecule,
     })
+
+
+# ===================================================================
+# Tool domain tagging
+# ===================================================================
+
+_TOOL_DOMAINS: dict[str, str] = {}
+
+def _tag(domain: str, names: list[str]) -> None:
+    for n in names:
+        _TOOL_DOMAINS[n] = domain
+
+_tag("genomics", [
+    "query_target_disease", "get_target_info", "query_gwas_associations",
+    "query_gene_variants", "query_clinvar_gene", "get_gene_info",
+    "get_variant_consequences", "query_rsid", "query_pharmgkb_gene",
+])
+_tag("expression", [
+    "get_gene_expression", "get_protein_expression", "get_pathology_data",
+    "query_gene_expression_single_cell", "search_geo_datasets",
+    "get_eqtls", "query_encode_experiments",
+])
+_tag("protein", [
+    "get_protein_info", "search_proteins", "get_protein_sequence",
+    "get_protein_features", "search_structures", "get_structure_info",
+    "get_binding_sites", "get_predicted_structure", "get_pae",
+    "get_protein_domains", "search_domains_by_name",
+    "get_interactions", "get_network", "get_enrichment",
+])
+_tag("clinical", [
+    "search_trials", "get_trial_details", "search_trials_by_target",
+    "search_pubmed", "get_article_details", "get_target_compounds",
+    "get_compound_info", "get_drug_info", "search_adverse_events",
+    "get_drug_label", "get_drug_label_sections",
+])
+_tag("literature", [
+    "search_papers", "get_paper_details", "get_citations", "get_references",
+    "get_author_papers", "search_preprints", "get_preprint_details",
+    "search_fulltext", "get_article_citations",
+])
+_tag("safety", [
+    "query_gene_chemical_interactions", "query_gene_disease_associations",
+    "query_chemical_diseases", "query_toxicity_assays", "get_side_effects",
+    "get_drug_indications", "get_knockout_phenotypes", "get_safety_summary",
+])
+_tag("protein_design", [
+    "esm2_score_sequence", "esm2_mutant_effect", "esm2_embed",
+    "calculate_protein_properties", "predict_solubility",
+    "predict_structure_alphafold", "blast_sequence", "calculate_cai",
+    "number_antibody", "predict_developability",
+])
+_tag("pathways", [
+    "get_pathways_for_gene", "get_pathway_details", "pathway_enrichment",
+    "get_go_annotations", "go_enrichment", "get_kegg_pathways",
+    "get_pathway_genes", "get_pathway_info", "search_pathways",
+])
+_tag("biosecurity", [
+    "screen_against_select_agents", "blast_protein", "check_select_agent_list",
+    "scan_toxin_domains", "screen_virulence_factors", "check_bwc_compliance",
+])
+_tag("metabolic", [
+    "run_fba", "run_fva", "simulate_gene_knockout", "simulate_reaction_knockout",
+    "add_heterologous_pathway", "list_available_models", "get_model_info",
+    "get_model_reactions", "optimize_codons", "predict_expression_level",
+])
+_tag("biorender", [
+    "generate_volcano_plot", "generate_expression_heatmap", "generate_pathway_diagram",
+    "generate_target_comparison_radar", "generate_gene_expression_bar",
+    "generate_drug_target_sankey", "generate_pipeline_flow", "generate_moa_diagram",
+    "generate_literature_wordcloud", "generate_confidence_distribution",
+    "generate_clinical_timeline", "generate_category_pie", "generate_venn_diagram",
+    "search_biorender_icons", "search_biorender_templates", "download_figure",
+])
+_tag("cheminformatics", [
+    "calculate_descriptors", "check_drug_likeness", "compute_fingerprint",
+    "compute_similarity", "substructure_search", "search_compound",
+    "get_compound_bioactivity", "get_compound_safety", "search_zinc",
+    "convert_molecule",
+])
+
+
+# ===================================================================
+# Tool metadata & catalog
+# ===================================================================
+
+class ToolDescriptor(TypedDict):
+    name: str
+    description: str
+    domain: str
+    parameters: list[str]
+    input_schema: dict
+
+
+def _get_tool_description(func: Callable) -> str:
+    """Extract a one-line description from a callable's docstring."""
+    doc = getattr(func, "__doc__", None)
+    if doc:
+        return doc.strip().split("\n")[0]
+    return func.__name__.replace("_", " ").title()
+
+
+def _get_input_schema_from_agents(tool_name: str) -> dict:
+    """Look up the input_schema for *tool_name* from agent _TOOLS lists.
+
+    Imports are deferred to avoid circular dependencies at module load time.
+    """
+    # Lazy import of all agent modules that define _TOOLS
+    from src.agents import (  # noqa: F811
+        statistical_genetics, functional_genomics, single_cell_atlas,
+        bio_pathways, fda_safety, toxicogenomics,
+        target_biologist, pharmacologist,
+        protein_intelligence, antibody_engineer, structure_design,
+        lead_optimization, developability,
+        clinical_trialist, literature_synthesis, assay_design,
+        dual_use_screening,
+    )
+
+    agent_modules = [
+        statistical_genetics, functional_genomics, single_cell_atlas,
+        bio_pathways, fda_safety, toxicogenomics,
+        target_biologist, pharmacologist,
+        protein_intelligence, antibody_engineer, structure_design,
+        lead_optimization, developability,
+        clinical_trialist, literature_synthesis, assay_design,
+        dual_use_screening,
+    ]
+
+    for mod in agent_modules:
+        tools_list = getattr(mod, "_TOOLS", [])
+        for tool_def in tools_list:
+            if tool_def.get("name") == tool_name:
+                return tool_def.get("input_schema", {})
+    return {"type": "object", "properties": {}}
+
+
+# Cache for the built catalog
+_catalog_cache: list[ToolDescriptor] | None = None
+
+
+def build_tool_catalog() -> list[ToolDescriptor]:
+    """Build a catalog of all registered tools with metadata.
+
+    Returns:
+        List of :class:`ToolDescriptor` dicts with name, description,
+        domain, parameter names, and input_schema.
+    """
+    global _catalog_cache
+    if _catalog_cache is not None:
+        return _catalog_cache
+
+    catalog: list[ToolDescriptor] = []
+    for name, func in TOOL_REGISTRY.items():
+        schema = _get_input_schema_from_agents(name)
+        params = list(schema.get("properties", {}).keys())
+        desc = _get_tool_description(func)
+        domain = _TOOL_DOMAINS.get(name, "unknown")
+
+        catalog.append(ToolDescriptor(
+            name=name,
+            description=desc,
+            domain=domain,
+            parameters=params,
+            input_schema=schema,
+        ))
+
+    _catalog_cache = catalog
+
+    # Log per-domain breakdown
+    domain_counts: dict[str, int] = {}
+    for td in catalog:
+        domain_counts[td["domain"]] = domain_counts.get(td["domain"], 0) + 1
+    logger.info("Built tool catalog: %d tools across %d domains", len(catalog), len(domain_counts))
+    for domain, count in sorted(domain_counts.items()):
+        logger.info("  %s: %d tools", domain, count)
+
+    return catalog
+
+
+def get_catalog_prompt_text() -> str:
+    """Return a compact text representation of the tool catalog for LLM prompts.
+
+    Format: ``name | domain | description`` per tool, ~3-4K tokens.
+    """
+    catalog = build_tool_catalog()
+    lines = ["Available tools (name | domain | description):"]
+    lines.append("-" * 60)
+    for td in catalog:
+        params_str = ", ".join(td["parameters"]) if td["parameters"] else "none"
+        lines.append(f"{td['name']} | {td['domain']} | {td['description']} | params: {params_str}")
+    return "\n".join(lines)
+
+
+def get_tool_schema(tool_name: str) -> dict | None:
+    """Look up the full tool-definition dict for a single tool.
+
+    Returns a dict with ``name``, ``description``, and ``input_schema``
+    suitable for passing to the Anthropic API, or ``None`` if not found.
+    """
+    catalog = build_tool_catalog()
+    for td in catalog:
+        if td["name"] == tool_name:
+            return {
+                "name": td["name"],
+                "description": td["description"],
+                "input_schema": td["input_schema"],
+            }
+    return None
 
 
 # ===================================================================

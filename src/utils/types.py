@@ -209,6 +209,29 @@ class BiosecurityAssessment(BaseModel):
 # Final Report
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Dynamic SubLab Planning
+# ---------------------------------------------------------------------------
+
+class AgentSpec(BaseModel):
+    """Specification for a dynamically created agent in a SubLab."""
+    name: str = Field(..., description="Human-readable agent name (e.g. 'Genomic Evidence Analyst').")
+    role: str = Field(..., description="One-sentence role description.")
+    tools: list[str] = Field(default_factory=list, description="Tool names from the catalog.")
+    domains: list[str] = Field(default_factory=list, description="Domain keys for prompt composition.")
+    model_tier: str = Field(default="SONNET", description="Model tier: 'OPUS', 'SONNET', or 'HAIKU'.")
+
+
+class SubLabPlan(BaseModel):
+    """LLM-generated plan for a dynamic multi-agent team."""
+    agents: list[AgentSpec] = Field(default_factory=list, description="Agent specifications.")
+    execution_groups: list[list[str]] = Field(
+        default_factory=list,
+        description="Sequential groups of agent names; agents within a group run in parallel.",
+    )
+    rationale: str = Field(default="", description="LLM rationale for the team composition.")
+
+
 class FinalReport(BaseModel):
     """Complete output delivered to the user after all phases complete."""
     query_id: str = Field(..., description="Unique identifier for the user query.")
