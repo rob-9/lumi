@@ -109,6 +109,30 @@ _TOOLS = [
             "required": ["gene"],
         },
     },
+    {
+        "name": "genebass_gene_associations",
+        "description": "Get exome-based phenotype associations for a gene from Genebass (UK Biobank).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol (e.g. PCSK9, APOB)."},
+                "p_threshold": {"type": "number", "description": "P-value threshold for significance."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "disgenet_gene_diseases",
+        "description": "Get disease associations for a gene from DisGeNET with GDA scores.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol."},
+                "min_score": {"type": "number", "description": "Minimum GDA score (0-1)."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
 ]
 
 

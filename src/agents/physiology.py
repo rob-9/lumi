@@ -78,6 +78,28 @@ _TOOLS = [
             "required": ["gene"],
         },
     },
+    {
+        "name": "hpo_gene_phenotypes",
+        "description": "Get HPO phenotype terms associated with a gene.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol (e.g. BRCA1, SCN1A)."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "hpo_disease_phenotypes",
+        "description": "Get HPO phenotype terms associated with a disease (OMIM/ORPHA).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "disease_id": {"type": "string", "description": "OMIM or ORPHA disease ID (e.g. OMIM:176000)."},
+            },
+            "required": ["disease_id"],
+        },
+    },
 ]
 
 

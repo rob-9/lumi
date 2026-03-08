@@ -95,6 +95,31 @@ _TOOLS = [
             "required": ["gene"],
         },
     },
+    {
+        "name": "biogrid_search_interactions",
+        "description": "Search BioGRID for protein-protein interactions involving a gene.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol (e.g. BRCA1, TP53)."},
+                "organism": {"type": "integer", "description": "NCBI Taxonomy ID (9606 for human)."},
+                "max_results": {"type": "integer", "description": "Max interactions to return."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "biogrid_get_interaction_network",
+        "description": "Get full BioGRID interaction network for a set of genes.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_list": {"type": "string", "description": "Pipe-separated gene symbols (e.g. 'BRCA1|TP53|EGFR')."},
+                "organism": {"type": "integer", "description": "NCBI Taxonomy ID."},
+            },
+            "required": ["gene_list"],
+        },
+    },
 ]
 
 

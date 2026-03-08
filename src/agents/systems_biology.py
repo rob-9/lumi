@@ -94,6 +94,31 @@ _TOOLS = [
             "required": ["query"],
         },
     },
+    {
+        "name": "biogrid_search_interactions",
+        "description": "Search BioGRID for protein-protein interactions involving a gene.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol."},
+                "organism": {"type": "integer", "description": "NCBI Taxonomy ID (9606 for human)."},
+                "max_results": {"type": "integer", "description": "Max interactions to return."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "disgenet_gene_diseases",
+        "description": "Get disease associations for a gene from DisGeNET with GDA scores.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol."},
+                "min_score": {"type": "number", "description": "Minimum GDA score (0-1)."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
 ]
 
 

@@ -65,6 +65,30 @@ _TOOLS = [
             "required": ["gene"],
         },
     },
+    {
+        "name": "ddinter_get_interactions",
+        "description": "Get drug-drug interactions for a drug from DDInter.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "drug_id": {"type": "string", "description": "Drug name or DDInter ID."},
+                "severity": {"type": "string", "description": "Severity filter: 'major', 'moderate', 'minor'."},
+            },
+            "required": ["drug_id"],
+        },
+    },
+    {
+        "name": "ddinter_check_pair",
+        "description": "Check for drug-drug interactions between two specific drugs.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "drug_a": {"type": "string", "description": "First drug name."},
+                "drug_b": {"type": "string", "description": "Second drug name."},
+            },
+            "required": ["drug_a", "drug_b"],
+        },
+    },
 ]
 
 

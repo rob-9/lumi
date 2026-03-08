@@ -81,6 +81,31 @@ _TOOLS = [
             "required": ["smiles1", "smiles2"],
         },
     },
+    {
+        "name": "bindingdb_search_by_smiles",
+        "description": "Search BindingDB for binding data by compound SMILES with similarity cutoff.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "smiles": {"type": "string", "description": "Compound SMILES string."},
+                "similarity": {"type": "number", "description": "Tanimoto similarity cutoff (0-1)."},
+                "max_results": {"type": "integer", "description": "Max results to return."},
+            },
+            "required": ["smiles"],
+        },
+    },
+    {
+        "name": "bindingdb_get_target_affinities",
+        "description": "Get binding affinities for a target protein from BindingDB by UniProt ID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "uniprot_id": {"type": "string", "description": "UniProt accession for the target."},
+                "max_results": {"type": "integer", "description": "Max results to return."},
+            },
+            "required": ["uniprot_id"],
+        },
+    },
 ]
 
 

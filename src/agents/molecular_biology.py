@@ -82,6 +82,30 @@ _TOOLS = [
             "required": ["genome", "chrom", "start", "end"],
         },
     },
+    {
+        "name": "mirtarbase_gene_mirnas",
+        "description": "Get validated miRNAs that target a specific gene from miRTarBase.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol (e.g. TP53, BRCA1)."},
+                "species": {"type": "string", "description": "Species name (default 'Homo sapiens')."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "mirtarbase_get_targets",
+        "description": "Get validated gene targets for a microRNA from miRTarBase.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "mirna_id": {"type": "string", "description": "miRNA ID (e.g. hsa-miR-21-5p)."},
+                "strong_evidence_only": {"type": "boolean", "description": "Only return strong evidence interactions."},
+            },
+            "required": ["mirna_id"],
+        },
+    },
 ]
 
 

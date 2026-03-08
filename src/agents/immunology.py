@@ -91,6 +91,28 @@ _TOOLS = [
             "required": ["entity_id"],
         },
     },
+    {
+        "name": "hpo_gene_phenotypes",
+        "description": "Get HPO phenotype terms associated with a gene.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol (e.g. IL2, CD4)."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "hpo_disease_phenotypes",
+        "description": "Get HPO phenotype terms associated with a disease.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "disease_id": {"type": "string", "description": "OMIM or ORPHA disease ID."},
+            },
+            "required": ["disease_id"],
+        },
+    },
 ]
 
 

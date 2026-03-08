@@ -76,6 +76,42 @@ _TOOLS = [
             "required": ["smiles"],
         },
     },
+    {
+        "name": "bindingdb_get_target_affinities",
+        "description": "Get binding affinities for a target protein from BindingDB by UniProt ID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "uniprot_id": {"type": "string", "description": "UniProt accession for the target."},
+                "max_results": {"type": "integer", "description": "Max results to return."},
+            },
+            "required": ["uniprot_id"],
+        },
+    },
+    {
+        "name": "ddinter_check_pair",
+        "description": "Check for drug-drug interactions between two specific drugs.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "drug_a": {"type": "string", "description": "First drug name."},
+                "drug_b": {"type": "string", "description": "Second drug name."},
+            },
+            "required": ["drug_a", "drug_b"],
+        },
+    },
+    {
+        "name": "biogrid_get_chemical_interactions",
+        "description": "Get chemical-protein interactions for a gene from BioGRID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol."},
+                "organism": {"type": "integer", "description": "NCBI Taxonomy ID (9606 for human)."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
 ]
 
 

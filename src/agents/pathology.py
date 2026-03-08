@@ -78,6 +78,28 @@ _TOOLS = [
             "required": ["gene"],
         },
     },
+    {
+        "name": "hpo_gene_phenotypes",
+        "description": "Get HPO phenotype terms associated with a gene.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol (e.g. BRCA1, SCN1A)."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "depmap_gene_dependency",
+        "description": "Get CRISPR dependency scores for a gene across DepMap cancer cell lines.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
 ]
 
 

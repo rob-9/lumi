@@ -80,6 +80,41 @@ _TOOLS = [
             "required": ["query"],
         },
     },
+    {
+        "name": "depmap_gene_dependency",
+        "description": "Get CRISPR dependency scores for a gene across DepMap cancer cell lines.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol (e.g. KRAS, EGFR)."},
+                "dataset": {"type": "string", "description": "Dependency dataset (default 'Chronos_Combined')."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "depmap_gene_mutations",
+        "description": "Get mutation data for a gene across DepMap cancer cell lines.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol (e.g. BRAF, PIK3CA)."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "disgenet_gene_diseases",
+        "description": "Get disease associations for a gene from DisGeNET with GDA scores.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol (e.g. TP53)."},
+                "min_score": {"type": "number", "description": "Minimum GDA score (0-1)."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
 ]
 
 

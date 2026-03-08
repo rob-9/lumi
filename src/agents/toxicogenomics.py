@@ -53,6 +53,30 @@ _TOOLS = [
             "required": ["gene"],
         },
     },
+    {
+        "name": "disgenet_gene_diseases",
+        "description": "Get disease associations for a gene from DisGeNET with GDA scores.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol."},
+                "min_score": {"type": "number", "description": "Minimum GDA score (0-1)."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "disgenet_variant_diseases",
+        "description": "Get disease associations for a variant from DisGeNET.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "variant_id": {"type": "string", "description": "dbSNP rsID (e.g. rs1234)."},
+                "max_results": {"type": "integer", "description": "Maximum associations to return."},
+            },
+            "required": ["variant_id"],
+        },
+    },
 ]
 
 

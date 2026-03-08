@@ -231,6 +231,66 @@ from src.mcp_servers.taxonomy.server import (
     iucn_get_species_status,
 )
 
+# -- BindingDB (Binding Affinities) -----------------------------------
+from src.mcp_servers.bindingdb.server import (
+    bindingdb_search_by_smiles,
+    bindingdb_get_target_affinities,
+    bindingdb_get_compound_affinities,
+    bindingdb_search_by_target_name,
+)
+
+# -- BioGRID (Protein Interactions) -----------------------------------
+from src.mcp_servers.biogrid.server import (
+    biogrid_search_interactions,
+    biogrid_get_interaction_network,
+    biogrid_get_chemical_interactions,
+)
+
+# -- DisGeNET (Gene-Disease Associations) -----------------------------
+from src.mcp_servers.disgenet.server import (
+    disgenet_gene_diseases,
+    disgenet_disease_genes,
+    disgenet_variant_diseases,
+    disgenet_search_diseases,
+)
+
+# -- DepMap (Cancer Dependency Map) -----------------------------------
+from src.mcp_servers.depmap.server import (
+    depmap_gene_dependency,
+    depmap_search_cell_lines,
+    depmap_gene_expression,
+    depmap_gene_mutations,
+)
+
+# -- HPO (Human Phenotype Ontology) -----------------------------------
+from src.mcp_servers.hpo.server import (
+    hpo_search_terms,
+    hpo_get_term,
+    hpo_gene_phenotypes,
+    hpo_disease_phenotypes,
+)
+
+# -- DDInter (Drug-Drug Interactions) ---------------------------------
+from src.mcp_servers.ddinter.server import (
+    ddinter_search_drug,
+    ddinter_get_interactions,
+    ddinter_check_pair,
+)
+
+# -- Genebass (Exome Associations) ------------------------------------
+from src.mcp_servers.genebass.server import (
+    genebass_gene_associations,
+    genebass_phenotype_genes,
+    genebass_search_phenotypes,
+)
+
+# -- miRTarBase (microRNA Targets) ------------------------------------
+from src.mcp_servers.mirtarbase.server import (
+    mirtarbase_get_targets,
+    mirtarbase_gene_mirnas,
+    mirtarbase_get_interaction,
+)
+
 # -- Alignment CLI (samtools + BWA -- optional) ------------------------
 _HAS_ALIGNMENT = False
 try:
@@ -531,6 +591,42 @@ TOOL_REGISTRY: dict[str, Callable] = {
     "paleodb_search_taxa": paleodb_search_taxa,
     "paleodb_get_occurrences": paleodb_get_occurrences,
     "iucn_get_species_status": iucn_get_species_status,
+    # --- BindingDB ---
+    "bindingdb_search_by_smiles": bindingdb_search_by_smiles,
+    "bindingdb_get_target_affinities": bindingdb_get_target_affinities,
+    "bindingdb_get_compound_affinities": bindingdb_get_compound_affinities,
+    "bindingdb_search_by_target_name": bindingdb_search_by_target_name,
+    # --- BioGRID ---
+    "biogrid_search_interactions": biogrid_search_interactions,
+    "biogrid_get_interaction_network": biogrid_get_interaction_network,
+    "biogrid_get_chemical_interactions": biogrid_get_chemical_interactions,
+    # --- DisGeNET ---
+    "disgenet_gene_diseases": disgenet_gene_diseases,
+    "disgenet_disease_genes": disgenet_disease_genes,
+    "disgenet_variant_diseases": disgenet_variant_diseases,
+    "disgenet_search_diseases": disgenet_search_diseases,
+    # --- DepMap ---
+    "depmap_gene_dependency": depmap_gene_dependency,
+    "depmap_search_cell_lines": depmap_search_cell_lines,
+    "depmap_gene_expression": depmap_gene_expression,
+    "depmap_gene_mutations": depmap_gene_mutations,
+    # --- HPO ---
+    "hpo_search_terms": hpo_search_terms,
+    "hpo_get_term": hpo_get_term,
+    "hpo_gene_phenotypes": hpo_gene_phenotypes,
+    "hpo_disease_phenotypes": hpo_disease_phenotypes,
+    # --- DDInter ---
+    "ddinter_search_drug": ddinter_search_drug,
+    "ddinter_get_interactions": ddinter_get_interactions,
+    "ddinter_check_pair": ddinter_check_pair,
+    # --- Genebass ---
+    "genebass_gene_associations": genebass_gene_associations,
+    "genebass_phenotype_genes": genebass_phenotype_genes,
+    "genebass_search_phenotypes": genebass_search_phenotypes,
+    # --- miRTarBase ---
+    "mirtarbase_get_targets": mirtarbase_get_targets,
+    "mirtarbase_gene_mirnas": mirtarbase_gene_mirnas,
+    "mirtarbase_get_interaction": mirtarbase_get_interaction,
 }
 
 # --- Metabolic (conditional) ---
