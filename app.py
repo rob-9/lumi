@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 import streamlit as st
 
 from src.factory import SUBLAB_REGISTRY
-from src.sublabs.base import Sublab
 from src.utils.types import (
     AgentResult,
     Claim,
@@ -23,8 +22,6 @@ from src.utils.types import (
     FinalReport,
     Phase,
     Priority,
-    Task,
-    TaskStatus,
 )
 
 # ---------------------------------------------------------------------------
@@ -70,90 +67,104 @@ def _mock_confidence(level: ConfidenceLevel, score: float) -> ConfidenceAssessme
 
 
 def _mock_claim(text: str, agent: str, level: ConfidenceLevel, score: float) -> Claim:
+    """Generate a placeholder claim for UI development.
+
+    NOTE: All data below is PLACEHOLDER for UI layout purposes only.
+    Evidence IDs, scores, and claim text are illustrative — not real results.
+    """
     return Claim(
         claim_text=text,
         supporting_evidence=[
-            EvidenceSource(source_db="PubMed", source_id="PMID:38291045"),
-            EvidenceSource(source_db="UniProt", source_id="P38398"),
+            EvidenceSource(source_db="placeholder", source_id="example-source-1"),
+            EvidenceSource(source_db="placeholder", source_id="example-source-2"),
         ],
         contradicting_evidence=[
-            EvidenceSource(source_db="PubMed", source_id="PMID:37104562"),
+            EvidenceSource(source_db="placeholder", source_id="example-contra-1"),
         ],
         confidence=_mock_confidence(level, score),
         agent_id=agent,
-        methodology="Systematic literature review and pathway analysis",
+        methodology="Placeholder — not a real analysis",
     )
 
 
 def _mock_final_report() -> FinalReport:
+    """Generate a placeholder report for UI layout development.
+
+    NOTE: ALL data below is PLACEHOLDER for UI development only.
+    Claims, scores, and numbers are illustrative — not real analysis results.
+    No real literature was consulted. Do not cite any values from this mock.
+    """
     return FinalReport(
         query_id="q_demo_001",
         user_query="Evaluate BRCA1 as a therapeutic target for triple-negative breast cancer",
         executive_summary=(
-            "BRCA1 shows strong evidence as a synthetic lethality target in TNBC. "
-            "PARP inhibitor combinations demonstrate significant clinical benefit in "
-            "BRCA1-mutant populations. Biomarker-guided patient selection is critical "
-            "for therapeutic success. Safety profile is manageable with appropriate "
-            "monitoring protocols."
+            "[PLACEHOLDER — UI DEMO ONLY] "
+            "This is a mock executive summary for UI layout testing. "
+            "In a real run, this section would contain the pipeline's "
+            "synthesised findings from all division reports."
         ),
         evidence_synthesis={
-            "genetic_evidence": "Strong GWAS and functional genomics support",
-            "pathway_analysis": "Central role in DNA damage repair confirmed",
-            "clinical_correlation": "Response rates correlate with mutation status",
+            "genetic_evidence": "[Placeholder] Would contain GWAS and functional genomics summary",
+            "pathway_analysis": "[Placeholder] Would contain pathway analysis results",
+            "clinical_correlation": "[Placeholder] Would contain clinical data summary",
         },
         key_findings=[
             _mock_claim(
-                "BRCA1 loss-of-function mutations confer synthetic lethality with PARP inhibition in TNBC cell lines and xenograft models.",
+                "[Placeholder] Example high-confidence finding about target biology.",
                 "target_biologist",
                 ConfidenceLevel.HIGH,
                 0.92,
             ),
             _mock_claim(
-                "Olaparib monotherapy achieves 59.9% objective response rate in germline BRCA-mutated HER2-negative metastatic breast cancer.",
+                "[Placeholder] Example clinical finding from trial data.",
                 "clinical_trialist",
                 ConfidenceLevel.HIGH,
                 0.88,
             ),
             _mock_claim(
-                "BRCA1 promoter methylation may serve as an additional biomarker for PARP inhibitor sensitivity beyond germline mutations.",
+                "[Placeholder] Example medium-confidence biomarker hypothesis.",
                 "statistical_genetics",
                 ConfidenceLevel.MEDIUM,
                 0.65,
             ),
             _mock_claim(
-                "Resistance mechanisms include BRCA1 reversion mutations and upregulation of drug efflux pumps, observed in 20-30% of patients.",
+                "[Placeholder] Example finding about resistance mechanisms.",
                 "literature_synthesis",
                 ConfidenceLevel.MEDIUM,
                 0.71,
             ),
             _mock_claim(
-                "Combination with immune checkpoint inhibitors may overcome resistance but requires further clinical validation.",
+                "[Placeholder] Example low-confidence combination therapy hypothesis.",
                 "pharmacologist",
                 ConfidenceLevel.LOW,
                 0.35,
             ),
         ],
         risk_assessment={
-            "safety_risk": "Moderate -- myelosuppression is the primary dose-limiting toxicity",
-            "feasibility_risk": "Low -- established clinical pathway for PARP inhibitors",
-            "commercial_risk": "Medium -- competitive landscape with multiple approved PARP inhibitors",
+            "safety_risk": "[Placeholder] Would contain safety risk assessment",
+            "feasibility_risk": "[Placeholder] Would contain feasibility assessment",
+            "commercial_risk": "[Placeholder] Would contain commercial landscape analysis",
         },
         recommended_experiments=[
-            {"experiment": "Validate BRCA1 methylation as PARPi sensitivity biomarker in patient-derived organoids", "priority": "HIGH"},
-            {"experiment": "Assess combination synergy with anti-PD-L1 in syngeneic TNBC models", "priority": "MEDIUM"},
-            {"experiment": "Profile resistance mutations in longitudinal liquid biopsy cohort", "priority": "HIGH"},
+            {"experiment": "[Placeholder] Example recommended experiment 1", "priority": "HIGH"},
+            {"experiment": "[Placeholder] Example recommended experiment 2", "priority": "MEDIUM"},
+            {"experiment": "[Placeholder] Example recommended experiment 3", "priority": "HIGH"},
         ],
         limitations=[
-            "Analysis limited to publicly available clinical trial data",
-            "In-silico pathway analysis may not capture all tissue-specific effects",
-            "Resistance mechanism frequencies based on limited patient cohorts",
+            "This is placeholder data for UI development only",
+            "No real analysis was performed to generate these results",
+            "All numbers and claims are illustrative",
         ],
-        total_cost=4.72,
-        total_duration_seconds=287.4,
+        total_cost=0.0,
+        total_duration_seconds=0.0,
     )
 
 
 def _mock_division_reports() -> list[DivisionReport]:
+    """Generate placeholder division reports for UI layout development.
+
+    NOTE: ALL data is PLACEHOLDER. No real analyses were performed.
+    """
     return [
         DivisionReport(
             division_id="div_target_identification",
@@ -165,33 +176,33 @@ def _mock_division_reports() -> list[DivisionReport]:
                     task_id="task_gwas_review",
                     findings=[
                         _mock_claim(
-                            "BRCA1 rs80357906 is strongly associated with TNBC risk (OR=11.2, p<1e-50).",
+                            "[Placeholder] Example genetic association finding.",
                             "statistical_genetics",
                             ConfidenceLevel.HIGH,
                             0.95,
                         ),
                     ],
                     tools_used=["query_gwas_catalog", "execute_code"],
-                    cost=0.82,
-                    duration_seconds=45.2,
+                    cost=0.0,
+                    duration_seconds=0.0,
                 ),
                 AgentResult(
                     agent_id="functional_genomics",
                     task_id="task_crispr_screens",
                     findings=[
                         _mock_claim(
-                            "CRISPR knockout of BRCA1 sensitizes TNBC cells to DNA-damaging agents (log2FC=-3.2).",
+                            "[Placeholder] Example functional genomics finding.",
                             "functional_genomics",
                             ConfidenceLevel.HIGH,
                             0.89,
                         ),
                     ],
                     tools_used=["query_depmap", "execute_code"],
-                    cost=0.65,
-                    duration_seconds=38.7,
+                    cost=0.0,
+                    duration_seconds=0.0,
                 ),
             ],
-            synthesis="Strong convergent evidence from GWAS and functional screens supports BRCA1 as a validated TNBC target.",
+            synthesis="[Placeholder] Division synthesis would appear here.",
             confidence=_mock_confidence(ConfidenceLevel.HIGH, 0.91),
         ),
         DivisionReport(
@@ -204,18 +215,18 @@ def _mock_division_reports() -> list[DivisionReport]:
                     task_id="task_fda_review",
                     findings=[
                         _mock_claim(
-                            "PARP inhibitors targeting BRCA1 synthetic lethality have a manageable safety profile with myelosuppression as the primary AE.",
+                            "[Placeholder] Example safety assessment finding.",
                             "fda_safety",
                             ConfidenceLevel.HIGH,
                             0.85,
                         ),
                     ],
                     tools_used=["query_faers", "execute_code"],
-                    cost=0.71,
-                    duration_seconds=42.1,
+                    cost=0.0,
+                    duration_seconds=0.0,
                 ),
             ],
-            synthesis="Safety profile is well-characterized from existing PARP inhibitor programs. No unexpected liabilities identified.",
+            synthesis="[Placeholder] Safety division synthesis would appear here.",
             confidence=_mock_confidence(ConfidenceLevel.HIGH, 0.85),
         ),
         DivisionReport(
@@ -228,60 +239,64 @@ def _mock_division_reports() -> list[DivisionReport]:
                     task_id="task_lit_review",
                     findings=[
                         _mock_claim(
-                            "Systematic review of 247 publications confirms BRCA1 as a well-validated oncology target with level 1 clinical evidence.",
+                            "[Placeholder] Example literature synthesis finding.",
                             "literature_synthesis",
                             ConfidenceLevel.HIGH,
                             0.88,
                         ),
                     ],
                     tools_used=["search_pubmed", "execute_code"],
-                    cost=0.93,
-                    duration_seconds=61.3,
+                    cost=0.0,
+                    duration_seconds=0.0,
                 ),
             ],
-            synthesis="Literature strongly supports BRCA1 targeting. No major contradictory evidence identified in recent publications.",
+            synthesis="[Placeholder] CompBio division synthesis would appear here.",
             confidence=_mock_confidence(ConfidenceLevel.HIGH, 0.88),
         ),
     ]
 
 
 def _mock_debate_rounds() -> list[dict]:
-    """Mock multi-agent debate data for confidence scoring visualization."""
+    """Placeholder multi-agent debate data for UI layout development.
+
+    NOTE: ALL data is PLACEHOLDER. No real debate occurred.
+    Evidence IDs are illustrative only — do not look them up or cite.
+    """
     return [
         {
             "round": 1,
             "agent_id": "target_biologist",
             "position": "support",
-            "argument": "BRCA1 loss-of-function is well-established as a synthetic lethality target. Multiple preclinical models confirm PARP sensitivity.",
-            "evidence": ["PMID:38291045", "PMID:36842073"],
+            "argument": "[Placeholder] Example supporting argument from target biologist.",
+            "evidence": ["placeholder-ref-1"],
         },
         {
             "round": 1,
             "agent_id": "literature_synthesis",
             "position": "support",
-            "argument": "247 publications consistently support BRCA1 as a validated target. Level 1 clinical evidence from OlympiAD and EMBRACA trials.",
-            "evidence": ["PMID:28578601", "PMID:29863767"],
+            "argument": "[Placeholder] Example supporting argument from literature synthesis.",
+            "evidence": ["placeholder-ref-2"],
         },
         {
             "round": 2,
             "agent_id": "pharmacologist",
             "position": "challenge",
-            "argument": "Resistance via reversion mutations is observed in 20-30% of patients. Long-term durability of response remains uncertain.",
-            "evidence": ["PMID:37104562"],
+            "argument": "[Placeholder] Example challenging argument from pharmacologist.",
+            "evidence": ["placeholder-ref-3"],
         },
         {
             "round": 2,
             "agent_id": "fda_safety",
             "position": "neutral",
-            "argument": "Safety profile is manageable but myelosuppression requires monitoring. Risk-benefit is favorable for BRCA-mutant patients specifically.",
-            "evidence": ["PMID:35436722"],
+            "argument": "[Placeholder] Example neutral argument from safety reviewer.",
+            "evidence": ["placeholder-ref-4"],
         },
         {
             "round": 3,
             "agent_id": "target_biologist",
             "position": "support",
-            "argument": "Acknowledging resistance concern — combination strategies with checkpoint inhibitors may address durability. Biomarker selection mitigates risk.",
-            "evidence": ["PMID:39012345"],
+            "argument": "[Placeholder] Example rebuttal incorporating feedback.",
+            "evidence": ["placeholder-ref-5"],
         },
     ]
 
@@ -873,7 +888,7 @@ def render_expert_review_tab() -> None:
                 st.markdown(confidence_badge(claim.confidence.level))
                 st.caption(f"Score: {claim.confidence.score:.0%}")
             with flag_cols[1]:
-                st.caption(f"Reason: Confidence below 50% threshold")
+                st.caption("Reason: Confidence below 50% threshold")
 
             # Expert feedback form
             feedback = st.text_area(

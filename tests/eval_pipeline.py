@@ -6,7 +6,12 @@ Tests the Lumi YOHAS pipeline architecture across multiple dimensions:
 3. HITL routing (confidence thresholds, Slack notification paths)
 4. Living document (version evolution across pipeline milestones)
 5. End-to-end pipeline (lightweight query through the full system)
-6. Biomni-comparable accuracy tasks (variant prioritization, drug repurposing)
+6. Benchmark tasks comparable to LAB-Bench DbQA, SeqQA, and HLE
+   (agent-executed with deterministic keyword scoring)
+
+NOTE: Benchmark tasks are Lumi-constructed questions testing the same
+capabilities as the official benchmarks, NOT the actual benchmark datasets.
+Scores are NOT directly comparable to published Biomni numbers.
 
 Usage:
     ANTHROPIC_API_KEY=sk-... python -m tests.eval_pipeline
@@ -75,25 +80,50 @@ class EvalSuite:
             if r.error:
                 lines.append(f"         Error: {r.error[:200]}")
 
-        # Biomni comparison table
-        biomni_results = [r for r in self.results if r.score is not None]
-        if biomni_results:
+        # Benchmark results by category
+        scored = [r for r in self.results if r.score is not None]
+        if scored:
             lines.append("")
             lines.append("-" * 70)
-            lines.append("BIOMNI ACCURACY COMPARISON")
+            lines.append("BENCHMARK RESULTS (keyword-match scoring)")
             lines.append("-" * 70)
-            lines.append(f"  {'Task':<40} {'Lumi':>8} {'Biomni':>8}")
-            lines.append(f"  {'─' * 40} {'─' * 8} {'─' * 8}")
-            biomni_scores = {
-                "Gene-Disease QA": 0.744,
-                "Drug Repurposing": 0.65,
-                "Variant Prioritization": 0.70,
-                "Literature Evidence QA": 0.819,
-            }
-            for r in biomni_results:
-                biomni_ref = biomni_scores.get(r.name, None)
-                biomni_str = f"{biomni_ref:.1%}" if biomni_ref else "N/A"
-                lines.append(f"  {r.name:<40} {r.score:>7.1%} {biomni_str:>8}")
+
+            # Group by category prefix
+            categories = {"DbQA": [], "SeqQA": [], "HLE": []}
+            for r in scored:
+                for cat in categories:
+                    if r.name.startswith(cat):
+                        categories[cat].append(r.score)
+                        break
+
+            lines.append(f"  {'Task':<50} {'Score':>8}")
+            lines.append(f"  {'─' * 50} {'─' * 8}")
+            for r in scored:
+                lines.append(f"  {r.name:<50} {r.score:>7.1%}")
+
+            lines.append("")
+            lines.append("  CATEGORY AVERAGES:")
+            # Biomni reference scores from the Biomni paper (for context only)
+            biomni_ref = {"DbQA": 0.744, "SeqQA": 0.819, "HLE": 0.173}
+            for cat, scores in categories.items():
+                if scores:
+                    avg = sum(scores) / len(scores)
+                    ref = biomni_ref.get(cat, 0)
+                    lines.append(
+                        f"  {cat:<12} Lumi: {avg:>6.1%}  |  "
+                        f"Biomni ref: {ref:.1%} (NOT directly comparable)"
+                    )
+
+            lines.append("")
+            lines.append(
+                "  NOTE: Lumi scores are from Lumi-constructed questions with"
+            )
+            lines.append(
+                "  keyword scoring. Biomni scores are from official benchmark"
+            )
+            lines.append(
+                "  datasets. These numbers are NOT a head-to-head comparison."
+            )
             lines.append("-" * 70)
 
         lines.append("=" * 70)
@@ -502,154 +532,257 @@ async def test_cso_planning(suite: EvalSuite, divisions: dict | None) -> None:
 
 
 # =======================================================================
-# BIOMNI ACCURACY COMPARISON TASKS
+# BIOMNI-COMPARABLE BENCHMARK TASKS
 # =======================================================================
-# These mirror Biomni's evaluation categories using LLM-as-judge scoring.
-# Each task poses a biomedical question with a known correct answer.
-# The agent's response is scored by a Haiku judge for accuracy.
+# These test Lumi agents on tasks comparable to three Biomni benchmarks:
+#
+# 1. LAB-Bench DbQA — Database question answering using real tool calls
+#    (Biomni scored 74.4%, human experts 74.7%)
+# 2. LAB-Bench SeqQA — Biological sequence question answering
+#    (Biomni scored 81.9%, human experts 78.8%)
+# 3. HLE Biomedical — Expert-level biomedical questions (52-question subset)
+#    (Biomni scored 17.3%, base LLM 6.0%)
+#
+# IMPORTANT CAVEATS:
+# - These are NOT the actual LAB-Bench or HLE test sets (those are
+#   proprietary/specific datasets). These are Lumi-constructed questions
+#   designed to test the SAME capabilities each benchmark evaluates.
+# - Scoring uses deterministic keyword matching against known correct
+#   answers, NOT LLM-as-judge (which inflates scores).
+# - Results are NOT directly comparable to Biomni's published numbers.
+#   They measure whether Lumi's agents can perform the same category
+#   of task, not performance on identical questions.
+#
+# Biomni reference scores are from the Biomni paper and included for
+# context only — not as a head-to-head comparison.
 # =======================================================================
 
-BIOMNI_TASKS = [
+# -- DbQA-style tasks: require querying databases via agent tools -------
+DBQA_TASKS = [
     {
-        "category": "Gene-Disease QA",
-        "question": "What is the primary molecular function of the PCSK9 protein and how does it relate to familial hypercholesterolemia?",
-        "ground_truth_keywords": [
-            "LDL receptor", "degradation", "lysosome", "cholesterol",
-            "gain-of-function", "mutation", "hepatocyte",
+        "name": "DbQA: Gene function lookup",
+        "task_description": (
+            "Using available database tools, answer: What is the primary "
+            "biological function of the TP53 gene, and what diseases are "
+            "most commonly associated with its loss-of-function mutations? "
+            "Cite specific database sources in your answer."
+        ),
+        "required_keywords": [
+            "tumor suppressor", "apoptosis", "cell cycle",
+            "Li-Fraumeni", "cancer",
         ],
-        "min_keywords": 3,
+        "min_correct": 3,
     },
     {
-        "category": "Drug Repurposing",
-        "question": "Sotorasib (AMG 510) was the first KRAS G12C inhibitor approved by the FDA. What is its mechanism of action, approved indication, and what is a key limitation?",
-        "ground_truth_keywords": [
-            "covalent", "switch II pocket", "GDP-bound", "inactive",
-            "NSCLC", "non-small cell lung cancer",
-            "resistance", "acquired resistance",
+        "name": "DbQA: Drug-target interaction",
+        "task_description": (
+            "Using available database tools, answer: What is the approved "
+            "mechanism of action of imatinib (Gleevec), what is its primary "
+            "molecular target, and what disease was it first approved for? "
+            "Cite specific database sources."
+        ),
+        "required_keywords": [
+            "tyrosine kinase", "BCR-ABL", "CML",
+            "chronic myeloid", "inhibitor",
         ],
-        "min_keywords": 3,
+        "min_correct": 3,
     },
     {
-        "category": "Variant Prioritization",
-        "question": "A patient has a heterozygous BRCA1 c.5266dupC (5382insC) variant. What is the clinical significance, the functional impact, and what cancer types is this variant most associated with?",
-        "ground_truth_keywords": [
-            "pathogenic", "frameshift", "truncat", "breast", "ovarian",
-            "homologous recombination", "PARP", "founder",
+        "name": "DbQA: Pathway membership",
+        "task_description": (
+            "Using available database tools, answer: What signaling pathway "
+            "does the BRAF gene primarily participate in, what is the most "
+            "common oncogenic mutation in BRAF, and what cancers is it "
+            "associated with? Cite sources."
+        ),
+        "required_keywords": [
+            "MAPK", "RAS", "RAF", "MEK", "ERK",
+            "V600E", "melanoma",
         ],
-        "min_keywords": 3,
+        "min_correct": 4,
+    },
+]
+
+# -- SeqQA-style tasks: require sequence analysis / reasoning -----------
+SEQQA_TASKS = [
+    {
+        "name": "SeqQA: Protein domain identification",
+        "task_description": (
+            "The human EGFR protein contains multiple functional domains. "
+            "Using your tools and knowledge, identify the key extracellular "
+            "and intracellular domains of EGFR, and explain which domain "
+            "is the target of cetuximab vs. erlotinib."
+        ),
+        "required_keywords": [
+            "extracellular", "kinase", "tyrosine",
+            "cetuximab", "erlotinib", "ligand",
+        ],
+        "min_correct": 4,
     },
     {
-        "category": "Literature Evidence QA",
-        "question": "What are the key findings from the CodeBreaK 200 trial comparing sotorasib to docetaxel in previously treated KRAS G12C-mutated NSCLC?",
-        "ground_truth_keywords": [
-            "progression-free survival", "PFS", "overall response rate",
-            "docetaxel", "second-line", "phase 3", "phase III",
-            "statistically significant", "crossover",
+        "name": "SeqQA: Mutation consequence",
+        "task_description": (
+            "A patient's tumor has an EGFR exon 19 deletion (delE746-A750). "
+            "Explain the molecular consequence of this deletion on EGFR "
+            "signaling, why it confers sensitivity to EGFR TKIs like "
+            "gefitinib, and what resistance mutation commonly emerges."
+        ),
+        "required_keywords": [
+            "in-frame", "deletion", "constitutive", "activation",
+            "gefitinib", "T790M", "resistance",
         ],
-        "min_keywords": 3,
+        "min_correct": 4,
+    },
+    {
+        "name": "SeqQA: Sequence feature interpretation",
+        "task_description": (
+            "The BRCA1 protein has an N-terminal RING domain and C-terminal "
+            "BRCT repeats. Explain the function of each domain, what happens "
+            "when truncating mutations occur before the BRCT domain, and why "
+            "this matters for PARP inhibitor therapy."
+        ),
+        "required_keywords": [
+            "RING", "BRCT", "ubiquitin", "E3 ligase",
+            "DNA repair", "homologous recombination",
+            "PARP", "synthetic lethality",
+        ],
+        "min_correct": 5,
+    },
+]
+
+# -- HLE-style tasks: expert-level, not answerable by simple lookup -----
+HLE_TASKS = [
+    {
+        "name": "HLE: Resistance mechanism",
+        "task_description": (
+            "In EGFR-mutant NSCLC treated with osimertinib (a third-generation "
+            "EGFR TKI), what are the three most common classes of acquired "
+            "resistance mechanisms, and for each, name a specific molecular "
+            "alteration and a potential therapeutic strategy to overcome it?"
+        ),
+        "required_keywords": [
+            "C797S", "MET amplification", "small cell transformation",
+            "histologic", "bypass", "osimertinib",
+        ],
+        "min_correct": 3,
+    },
+    {
+        "name": "HLE: Multi-omics integration",
+        "task_description": (
+            "Explain how single-cell RNA-seq and bulk ATAC-seq data can be "
+            "integrated to identify cell-type-specific regulatory elements "
+            "in a tumor microenvironment. What computational challenges arise "
+            "from batch effects, and name one established method for this "
+            "integration."
+        ),
+        "required_keywords": [
+            "single-cell", "chromatin accessibility", "regulatory",
+            "batch effect", "integration", "cell type",
+        ],
+        "min_correct": 4,
+    },
+    {
+        "name": "HLE: Clinical genomics reasoning",
+        "task_description": (
+            "A rare disease patient has compound heterozygous variants in "
+            "CFTR: one copy has the F508del mutation and the other has a "
+            "novel missense variant (p.G551D). Explain the molecular "
+            "pathology of each variant, predict the clinical phenotype, "
+            "and identify which FDA-approved CFTR modulator(s) would be "
+            "appropriate for this genotype."
+        ),
+        "required_keywords": [
+            "F508del", "folding", "trafficking", "G551D", "gating",
+            "ivacaftor", "cystic fibrosis",
+        ],
+        "min_correct": 4,
     },
 ]
 
 
-async def test_biomni_accuracy(suite: EvalSuite) -> None:
-    """Run Biomni-comparable accuracy tasks using LLM-as-judge scoring."""
-    from src.utils.llm import LLMClient, ModelTier
+def _keyword_score(answer: str, required: list[str], min_correct: int) -> tuple[float, list[str], list[str]]:
+    """Deterministic keyword matching — no LLM judge.
 
-    llm = LLMClient()
+    Returns (score, matched_list, missing_list).
+    Score = fraction of required keywords found (case-insensitive).
+    """
+    answer_lower = answer.lower()
+    matched = [kw for kw in required if kw.lower() in answer_lower]
+    missing = [kw for kw in required if kw.lower() not in answer_lower]
+    score = len(matched) / len(required) if required else 0.0
+    return round(score, 4), matched, missing
 
-    for task_def in BIOMNI_TASKS:
-        t0 = time.time()
-        category = task_def["category"]
-        question = task_def["question"]
-        keywords = task_def["ground_truth_keywords"]
-        min_kw = task_def["min_keywords"]
 
-        try:
-            # Step 1: Get the agent's answer using Sonnet
-            answer_resp = await llm.chat(
-                messages=[{"role": "user", "content": question}],
-                model=ModelTier.SONNET,
-                system=(
-                    "You are a biomedical research scientist. Answer the question "
-                    "accurately and concisely using your scientific knowledge. "
-                    "Include specific molecular mechanisms, clinical details, "
-                    "and evidence where relevant."
-                ),
-                max_tokens=1500,
-            )
-            answer = "".join(
-                b.text for b in answer_resp.content if hasattr(b, "text")
-            )
+async def _run_agent_task(task_description: str) -> str:
+    """Run a task through an actual Lumi agent (Literature Synthesis) with tools.
 
-            # Step 2: Score using LLM-as-judge (Haiku for cost efficiency)
-            judge_prompt = f"""Score the following biomedical answer for accuracy.
+    This tests real agent capability — tool use, reasoning, synthesis —
+    not just raw LLM parametric knowledge.
+    """
+    from src.agents import create_literature_synthesis_agent
+    from src.utils.types import Task
 
-QUESTION: {question}
+    agent = create_literature_synthesis_agent()
+    task = Task(
+        task_id=f"bench_{int(time.time())}",
+        description=task_description,
+        division="Computational Biology",
+    )
+    result = await agent.execute(task)
+    return result.raw_data.get("final_response", "")
 
-ANSWER TO EVALUATE:
-{answer}
 
-REQUIRED KNOWLEDGE (the answer should cover these concepts):
-{json.dumps(keywords)}
+async def test_benchmark_suite(suite: EvalSuite) -> None:
+    """Run all three benchmark categories through real Lumi agents.
 
-Score the answer on a scale of 0.0 to 1.0 where:
-- 1.0 = Fully accurate, covers all key concepts, no factual errors
-- 0.75 = Mostly accurate, covers most concepts, minor gaps
-- 0.5 = Partially accurate, covers some concepts, notable gaps
-- 0.25 = Minimally accurate, major gaps or some errors
-- 0.0 = Incorrect or irrelevant
+    Each task is executed by an actual agent with tool access (not a raw
+    LLM call). Scoring is deterministic keyword matching.
+    """
+    all_tasks = [
+        ("DbQA", DBQA_TASKS),
+        ("SeqQA", SEQQA_TASKS),
+        ("HLE", HLE_TASKS),
+    ]
 
-Reply with ONLY a JSON object: {{"score": <float>, "matched_keywords": [<list of matched keywords>], "missing": [<list of missing concepts>], "errors": [<list of factual errors if any>]}}"""
+    category_scores: dict[str, list[float]] = {"DbQA": [], "SeqQA": [], "HLE": []}
 
-            judge_resp = await llm.chat(
-                messages=[{"role": "user", "content": judge_prompt}],
-                model=ModelTier.HAIKU,
-                max_tokens=500,
-                temperature=0.0,
-            )
-            judge_text = "".join(
-                b.text for b in judge_resp.content if hasattr(b, "text")
-            )
+    for category, tasks in all_tasks:
+        for task_def in tasks:
+            t0 = time.time()
+            name = task_def["name"]
+            description = task_def["task_description"]
+            required = task_def["required_keywords"]
+            min_correct = task_def["min_correct"]
 
-            # Parse judge response
-            score = 0.0
-            matched = []
             try:
-                # Find JSON in response
-                clean = judge_text.strip()
-                if "```" in clean:
-                    lines = clean.split("\n")
-                    lines = [ln for ln in lines if not ln.strip().startswith("```")]
-                    clean = "\n".join(lines).strip()
-                start = clean.find("{")
-                end = clean.rfind("}") + 1
-                if start >= 0 and end > start:
-                    judge_data = json.loads(clean[start:end])
-                    score = float(judge_data.get("score", 0.0))
-                    matched = judge_data.get("matched_keywords", [])
-            except (json.JSONDecodeError, ValueError):
-                # Fallback: keyword counting
-                answer_lower = answer.lower()
-                matched = [kw for kw in keywords if kw.lower() in answer_lower]
-                score = min(1.0, len(matched) / max(min_kw, 1))
+                answer = await _run_agent_task(description)
 
-            passed = score >= 0.5  # Minimum acceptable accuracy
-            suite.add(EvalResult(
-                name=category,
-                passed=passed,
-                duration=time.time() - t0,
-                details=f"Matched: {len(matched)}/{len(keywords)} keywords",
-                score=score,
-            ))
+                score, matched, missing = _keyword_score(answer, required, min_correct)
+                category_scores[category].append(score)
 
-            # Small delay between tasks to avoid rate limiting
-            await asyncio.sleep(2.0)
+                passed = len(matched) >= min_correct
+                suite.add(EvalResult(
+                    name=name,
+                    passed=passed,
+                    duration=time.time() - t0,
+                    details=f"Matched: {len(matched)}/{len(required)} — missing: {missing}" if missing else f"Matched: {len(matched)}/{len(required)} — all keywords found",
+                    score=score,
+                ))
 
-        except Exception as e:
-            suite.add(EvalResult(
-                name=category, passed=False,
-                duration=time.time() - t0, error=str(e), score=0.0,
-            ))
+                # Delay between tasks to respect rate limits
+                await asyncio.sleep(3.0)
+
+            except Exception as e:
+                suite.add(EvalResult(
+                    name=name, passed=False,
+                    duration=time.time() - t0, error=str(e), score=0.0,
+                ))
+                category_scores[category].append(0.0)
+
+    # Log category averages
+    for cat, scores in category_scores.items():
+        avg = sum(scores) / len(scores) if scores else 0.0
+        logger.info("[%s] Category average: %.1f%% (%d tasks)", cat, avg * 100, len(scores))
 
 
 # -----------------------------------------------------------------------
@@ -693,11 +826,11 @@ async def main() -> None:
     # 10. CSO planning
     await test_cso_planning(suite, divisions)
 
-    # 11. Biomni accuracy comparison (4 tasks, sequential to avoid rate limits)
+    # 11. Benchmark suite: DbQA + SeqQA + HLE (9 tasks, sequential)
     logger.info("=" * 70)
-    logger.info("BIOMNI ACCURACY COMPARISON TASKS")
+    logger.info("BENCHMARK TASKS: LAB-Bench DbQA / SeqQA + HLE (agent-executed)")
     logger.info("=" * 70)
-    await test_biomni_accuracy(suite)
+    await test_benchmark_suite(suite)
 
     print(suite.summary())
 
