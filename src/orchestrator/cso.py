@@ -19,6 +19,7 @@ from typing import Any, Optional
 from src.utils.cost_tracker import cost_tracker
 from src.utils.llm import LLMClient, ModelTier
 from src.utils.types import (
+    AgentSpec,
     BiosecurityAssessment,
     BiosecurityCategory,
     Claim,
@@ -32,6 +33,7 @@ from src.utils.types import (
     Priority,
     ReviewVerdict,
     ReviewVerdictType,
+    SubLabPlan,
     Task,
 )
 from src.divisions.base_lead import DivisionLead
@@ -159,6 +161,8 @@ class CSOOrchestrator:
         self,
         divisions: dict[str, DivisionLead] | None = None,
         hitl_config: HITLConfig | None = None,
+        tool_catalog: list[dict] | None = None,
+        sublab_hint: str | None = None,
     ) -> None:
         """Initialise the CSO.
 
@@ -168,8 +172,14 @@ class CSOOrchestrator:
                 execution (useful for testing planning logic).
             hitl_config: Configuration for human-in-the-loop routing.
                 If None, uses defaults (enabled with standard thresholds).
+            tool_catalog: When provided, enables dynamic SubLab mode.
+                List of tool descriptor dicts from
+                :func:`~src.mcp_bridge.build_tool_catalog`.
+            sublab_hint: Optional hint from the UI sublab picker.
         """
         self.divisions = divisions or {}
+        self.tool_catalog = tool_catalog
+        self.sublab_hint = sublab_hint
         self.llm = LLMClient()
         self._query_id: str = ""
         self.hitl_config = hitl_config or HITLConfig()
@@ -230,8 +240,16 @@ class CSOOrchestrator:
                 return self._vetoed_report(user_query, biosec_result, start_time)
 
             # Phase 5: Analytical execution
-            logger.info("[CSO] Phase 5 — Analytical execution")
-            analytical_reports = await self._execute_analytical(plan)
+            if self.tool_catalog is not None:
+                logger.info("[CSO] Phase 5 — Dynamic SubLab mode (%d tools in catalog)", len(self.tool_catalog))
+                logger.info("[CSO] Phase 5a — Planning SubLab team")
+                sublab_plan = await self._plan_sublab(research_brief, intel_brief)
+                logger.info("[CSO] Phase 5b — Executing SubLab (%d agents)", len(sublab_plan.agents))
+                analytical_reports = await self._execute_sublab(sublab_plan, plan)
+                logger.info("[CSO] Phase 5 — SubLab complete: %d reports", len(analytical_reports))
+            else:
+                logger.info("[CSO] Phase 5 — Static analytical execution")
+                analytical_reports = await self._execute_analytical(plan)
             await self.doc_manager.on_analytical_complete(analytical_reports)
 
             # Phase 6: Design execution (if applicable)
@@ -447,7 +465,40 @@ class CSOOrchestrator:
             return self._fallback_plan(research_brief)
 
     # ------------------------------------------------------------------
-    # Phase 5: Analytical execution
+    # Phase 5 (dynamic): SubLab planning and execution
+    # ------------------------------------------------------------------
+
+    async def _plan_sublab(
+        self, research_brief: dict, intel_brief: dict
+    ) -> SubLabPlan:
+        """Plan a dynamic SubLab team using the tool catalog."""
+        from src.orchestrator.sublab_planner import SubLabPlanner
+        from src.mcp_bridge import get_catalog_prompt_text
+
+        planner = SubLabPlanner()
+        catalog_text = get_catalog_prompt_text()
+
+        return await planner.plan_sublab(
+            research_brief=research_brief,
+            intel_brief=intel_brief,
+            tool_catalog_text=catalog_text,
+            sublab_hint=self.sublab_hint,
+        )
+
+    async def _execute_sublab(
+        self, sublab_plan: SubLabPlan, plan: ExecutionPlan
+    ) -> list[DivisionReport]:
+        """Execute a dynamic SubLab plan."""
+        from src.orchestrator.sublab_executor import SubLabExecutor
+
+        executor = SubLabExecutor()
+        return await executor.execute(
+            sublab_plan=sublab_plan,
+            task_description=plan.confirmed_scope or plan.user_query,
+        )
+
+    # ------------------------------------------------------------------
+    # Phase 5 (static): Analytical execution
     # ------------------------------------------------------------------
 
     async def _execute_analytical(
