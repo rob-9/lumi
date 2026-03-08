@@ -64,6 +64,74 @@ _TOOLS = [
             "required": ["sequence"],
         },
     },
+    # --- Tamarind Bio: computational job submission ---
+    {
+        "name": "tamarind_list_tools",
+        "description": "List all available Tamarind Bio computational tools and their configuration schemas.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "tamarind_submit_job",
+        "description": "Submit a computational biology job (folding, docking, MD simulation) to Tamarind Bio.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "job_name": {"type": "string", "description": "Unique job name."},
+                "tool_type": {"type": "string", "description": "Tool name (e.g. 'alphafold', 'diffdock', 'openmm')."},
+                "settings": {"type": "object", "description": "Tool-specific settings dict."},
+                "project_tag": {"type": "string", "description": "Optional project tag.", "default": ""},
+            },
+            "required": ["job_name", "tool_type", "settings"],
+        },
+    },
+    {
+        "name": "tamarind_get_jobs",
+        "description": "Check status of Tamarind Bio jobs. Returns JobStatus: 'In Queue', 'Running', 'Complete', or 'Stopped'.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "job_name": {"type": "string", "description": "Specific job name to check (optional)."},
+                "limit": {"type": "integer", "description": "Max jobs to return.", "default": 50},
+            },
+        },
+    },
+    {
+        "name": "tamarind_get_result",
+        "description": "Get presigned S3 URL to download results of a completed Tamarind job.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "job_name": {"type": "string", "description": "Name of the completed job."},
+                "file_name": {"type": "string", "description": "Specific output file path (optional)."},
+            },
+            "required": ["job_name"],
+        },
+    },
+    {
+        "name": "tamarind_submit_pipeline",
+        "description": "Submit a multi-stage pipeline (e.g. RFdiffusion → ProteinMPNN → AlphaFold). Use 'pipe' for values that receive previous stage output.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "job_name": {"type": "string", "description": "Pipeline job name."},
+                "initial_inputs": {"type": "array", "items": {"type": "string"}, "description": "Input files or sequences."},
+                "stages": {"type": "array", "items": {"type": "object"}, "description": "Pipeline stage definitions with task and toolSettings."},
+            },
+            "required": ["job_name", "initial_inputs", "stages"],
+        },
+    },
+    {
+        "name": "tamarind_upload_file",
+        "description": "Upload a PDB/SDF file to Tamarind Bio for use as job input.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "filename": {"type": "string", "description": "Target filename."},
+                "file_content": {"type": "string", "description": "File content as text."},
+            },
+            "required": ["filename", "file_content"],
+        },
+    },
 ]
 
 

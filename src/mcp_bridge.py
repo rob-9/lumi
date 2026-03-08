@@ -168,6 +168,27 @@ try:
 except ImportError:
     logger.warning("Metabolic MCP server not available (missing cobra?)")
 
+# -- Tamarind Bio (requires API key -- optional) --------------------------
+_HAS_TAMARIND = False
+try:
+    from src.mcp_servers.tamarind.server import (
+        tamarind_list_tools,
+        tamarind_submit_job,
+        tamarind_submit_batch,
+        tamarind_get_jobs,
+        tamarind_poll_until_complete,
+        tamarind_get_result,
+        tamarind_upload_file,
+        tamarind_list_files,
+        tamarind_submit_pipeline,
+        tamarind_run_pipeline,
+        tamarind_delete_job,
+        tamarind_get_finetuned_models,
+    )
+    _HAS_TAMARIND = True
+except ImportError:
+    logger.warning("Tamarind Bio MCP server not available")
+
 # -- BioRender / Figure Generation (requires mcp + Node.js -- optional) -
 _HAS_BIORENDER = False
 try:
@@ -325,6 +346,23 @@ if _HAS_METABOLIC:
         "get_model_reactions": get_model_reactions,
         "optimize_codons": optimize_codons,
         "predict_expression_level": predict_expression_level,
+    })
+
+# --- Tamarind Bio (conditional) ---
+if _HAS_TAMARIND:
+    TOOL_REGISTRY.update({
+        "tamarind_list_tools": tamarind_list_tools,
+        "tamarind_submit_job": tamarind_submit_job,
+        "tamarind_submit_batch": tamarind_submit_batch,
+        "tamarind_get_jobs": tamarind_get_jobs,
+        "tamarind_poll_until_complete": tamarind_poll_until_complete,
+        "tamarind_get_result": tamarind_get_result,
+        "tamarind_upload_file": tamarind_upload_file,
+        "tamarind_list_files": tamarind_list_files,
+        "tamarind_submit_pipeline": tamarind_submit_pipeline,
+        "tamarind_run_pipeline": tamarind_run_pipeline,
+        "tamarind_delete_job": tamarind_delete_job,
+        "tamarind_get_finetuned_models": tamarind_get_finetuned_models,
     })
 
 # --- BioRender / Figure Generation (conditional) ---

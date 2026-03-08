@@ -449,6 +449,7 @@ def init_session_state() -> None:
         "mock_debate": None,
         "hitl_reviews": {},
         "generated_figures": {},
+        "tamarind_jobs": [],
     }
     for key, val in defaults.items():
         if key not in st.session_state:
@@ -870,29 +871,100 @@ def render_monitor_tab() -> None:
     st.divider()
 
     # --- Computational Biology Jobs (#5) ------------------------------------
-    # TODO: Wire to Tamarind Bio API (#5)
     st.subheader("Computational Biology Jobs")
-    mock_jobs = [
-        {"job_id": "tb_001", "type": "protein_folding", "target": "BRCA1 BRCT domain", "status": "complete", "submitted": "2m ago"},
-        {"job_id": "tb_002", "type": "docking", "target": "PARP1-olaparib", "status": "running", "submitted": "45s ago"},
-        {"job_id": "tb_003", "type": "md_simulation", "target": "BRCA1-RAD51 complex", "status": "queued", "submitted": "10s ago"},
-    ]
-    status_icons = {"complete": ":green_circle:", "running": ":orange_circle:", "queued": ":white_circle:"}
-    for job in mock_jobs:
-        with st.container(border=True):
-            cols = st.columns([1, 2, 1, 1])
-            with cols[0]:
-                st.markdown(f"{status_icons.get(job['status'], '')} **{job['status'].upper()}**")
-            with cols[1]:
-                st.markdown(f"`{job['job_id']}` — {job['type'].replace('_', ' ')}")
-                st.caption(f"Target: {job['target']}")
-            with cols[2]:
-                st.caption(f"Submitted: {job['submitted']}")
-            with cols[3]:
-                if job["status"] == "complete":
-                    with st.expander("Results"):
-                        st.caption("Predicted structure confidence: pLDDT 87.3")
-                        st.caption("Placeholder — wire to Tamarind Bio API (#5)")
+
+    # Display Tamarind Bio jobs from session state (populated by pipeline or manual refresh)
+    tamarind_jobs: list[dict] = st.session_state.get("tamarind_jobs", [])
+
+    if not tamarind_jobs:
+        st.info(
+            "No computational biology jobs yet. Jobs are submitted by "
+            "``protein_intelligence`` and ``structure_design`` agents during pipeline execution, "
+            "or connect your Tamarind Bio API key (``TAMARIND_API_KEY``) and click Refresh."
+        )
+        if st.button("Refresh Jobs from Tamarind Bio"):
+            try:
+                from src.mcp_servers.tamarind.server import tamarind_get_jobs
+                import asyncio
+
+                result = asyncio.run(tamarind_get_jobs(limit=20))
+                if not result.get("error"):
+                    st.session_state.tamarind_jobs = result.get("raw_data", {}).get("jobs", [])
+                    st.rerun()
+                else:
+                    st.error(f"Tamarind API error: {result.get('message', 'Unknown error')}")
+            except Exception as e:
+                st.error(f"Could not connect to Tamarind Bio: {e}")
+    else:
+        status_icons = {
+            "Complete": ":green_circle:",
+            "Running": ":orange_circle:",
+            "In Queue": ":blue_circle:",
+            "Stopped": ":red_circle:",
+        }
+
+        # Summary metrics
+        status_counts: dict[str, int] = {}
+        for job in tamarind_jobs:
+            s = job.get("JobStatus", "Unknown")
+            status_counts[s] = status_counts.get(s, 0) + 1
+
+        job_metric_cols = st.columns(4)
+        with job_metric_cols[0]:
+            st.metric("Total", len(tamarind_jobs))
+        with job_metric_cols[1]:
+            st.metric("Complete", status_counts.get("Complete", 0))
+        with job_metric_cols[2]:
+            st.metric("Running", status_counts.get("Running", 0))
+        with job_metric_cols[3]:
+            st.metric("Queued", status_counts.get("In Queue", 0))
+
+        for job in tamarind_jobs:
+            job_status = job.get("JobStatus", "Unknown")
+            job_name = job.get("JobName", "unnamed")
+            job_type = job.get("Type", "unknown")
+            created = job.get("Created", "")
+
+            with st.container(border=True):
+                cols = st.columns([1, 2, 1, 1])
+                with cols[0]:
+                    icon = status_icons.get(job_status, ":white_circle:")
+                    st.markdown(f"{icon} **{job_status.upper()}**")
+                with cols[1]:
+                    st.markdown(f"`{job_name}` — {job_type}")
+                    if job.get("WeightedHours"):
+                        st.caption(f"Compute: {job['WeightedHours']:.2f} weighted hours")
+                with cols[2]:
+                    st.caption(f"Created: {created[:16] if created else 'N/A'}")
+                with cols[3]:
+                    if job_status == "Complete":
+                        if st.button("Get Results", key=f"result_{job_name}"):
+                            try:
+                                from src.mcp_servers.tamarind.server import tamarind_get_result
+                                import asyncio
+
+                                result = asyncio.run(tamarind_get_result(job_name=job_name))
+                                if not result.get("error"):
+                                    url = result.get("raw_data", {}).get("result_url", "")
+                                    st.markdown(f"[Download results]({url})")
+                                else:
+                                    st.error(result.get("message", "Failed"))
+                            except Exception as e:
+                                st.error(str(e))
+
+        if st.button("Refresh Jobs"):
+            try:
+                from src.mcp_servers.tamarind.server import tamarind_get_jobs
+                import asyncio
+
+                result = asyncio.run(tamarind_get_jobs(limit=20))
+                if not result.get("error"):
+                    st.session_state.tamarind_jobs = result.get("raw_data", {}).get("jobs", [])
+                    st.rerun()
+                else:
+                    st.error(f"Tamarind API error: {result.get('message', 'Unknown error')}")
+            except Exception as e:
+                st.error(f"Could not connect to Tamarind Bio: {e}")
 
 
 # ---------------------------------------------------------------------------
