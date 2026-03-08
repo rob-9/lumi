@@ -14,6 +14,7 @@ venv/
 !.env.template
 
 # Data
+*.cif
 data/metabolic_models/*.xml
 data/reference/*.fasta
 data/reference/*.obo

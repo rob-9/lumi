@@ -71,6 +71,11 @@ chem = [
     "rdkit-pypi>=2023.9.0",
     "datamol>=0.12.0",
 ]
+structure = [
+    # pymol-open-source must be installed via conda-forge, not pip:
+    #   conda create -n pymol_agent python=3.11 pymol-open-source -c conda-forge
+    #   conda run -n pymol_agent pip install fastmcp mcp httpx-sse
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
