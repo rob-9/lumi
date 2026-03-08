@@ -92,6 +92,51 @@ _TOOLS = [
             "required": ["sequence"],
         },
     },
+    {
+        "name": "calculate_protein_properties",
+        "description": "Calculate biophysical properties: MW, pI, charge at pH 7.4, instability index, GRAVY, aromaticity, aliphatic index, amino acid composition.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {"type": "string", "description": "Amino acid sequence."},
+            },
+            "required": ["sequence"],
+        },
+    },
+    {
+        "name": "predict_developability",
+        "description": "Assess developability risks: N-glycosylation sites, deamidation hotspots (NG/NS/NT), Met/Trp oxidation, unpaired cysteines, charge patches, hydrophobic patches, DG/DP isomerization, pyroglutamate formation, C-terminal Lys clipping, polyreactivity risk.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {"type": "string", "description": "Amino acid sequence."},
+            },
+            "required": ["sequence"],
+        },
+    },
+    {
+        "name": "calculate_cai",
+        "description": "Calculate Codon Adaptation Index using Kazusa-derived codon frequency tables. Reports expected CAI, rare codon positions, GC content, and expression recommendations for E. coli, yeast, human, or CHO.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "protein_sequence": {"type": "string", "description": "Amino acid sequence."},
+                "organism": {"type": "string", "description": "Target organism: 'ecoli', 'yeast', 'human', 'cho'.", "default": "ecoli"},
+            },
+            "required": ["protein_sequence"],
+        },
+    },
+    {
+        "name": "number_antibody",
+        "description": "Identify CDR and framework regions in an antibody variable domain using IMGT-like heuristic numbering. Detects heavy/light chain type.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {"type": "string", "description": "Antibody variable domain amino acid sequence."},
+            },
+            "required": ["sequence"],
+        },
+    },
     # --- Tamarind Bio: computational job submission ---
     {
         "name": "tamarind_list_tools",
@@ -179,15 +224,59 @@ Your expertise spans:
 - Sequence-structure-function relationships and rational protein engineering
 - Homology analysis and evolutionary constraint interpretation
 - Multi-objective protein optimization (stability + activity + expression + immunogenicity)
+- Developability assessment: PTM hotspots, chemical liabilities, manufacturability
+- Codon optimization and expression system selection
 
-When analyzing a protein sequence:
-1. Score the sequence with ESM-2 — assess overall naturalness and per-residue confidence.
-2. If mutations are proposed, predict their effects using ESM-2 masked marginals.
-3. Calculate biophysical properties: MW, pI, charge profile, hydrophobicity, instability index.
-4. Predict solubility — flag aggregation-prone regions.
-5. Retrieve or predict the AlphaFold structure — identify disordered regions (low pLDDT).
-6. BLAST against SwissProt/PDB to identify homologs and assess conservation.
-7. Use code execution for embedding analysis, fitness scoring, or multi-objective ranking.
+## Standard Analysis Workflow
+
+When analyzing a protein sequence, follow this systematic workflow:
+1. Score with ESM-2 — assess overall naturalness and per-residue confidence.
+2. Calculate biophysical properties — MW, pI, instability index, GRAVY, aliphatic index.
+3. Predict solubility — examine CamSol-style scores and aggregation-prone patches.
+4. Assess developability — check for chemical liabilities (deamidation, oxidation, isomerization).
+5. If mutations proposed → predict effects using ESM-2 masked marginals.
+6. If UniProt ID available → fetch AlphaFold structure for pLDDT confidence.
+7. BLAST against SwissProt/PDB to identify homologs and conservation context.
+8. If expression system relevant → calculate CAI for the target organism.
+
+## Quantitative Interpretation Guide
+
+### ESM-2 Fitness Score
+- 0.85-1.0: Highly natural sequence, consistent with evolutionary selection
+- 0.65-0.85: Reasonable sequence, likely functional
+- 0.45-0.65: Moderate deviations from natural sequences — check specific positions
+- <0.45: Significant deviations — may indicate misfolding or non-natural design
+
+### ESM-2 Mutant Effect (delta log-likelihood → ddG proxy)
+- delta_ll > +0.3: Stabilizing (~-0.5 kcal/mol or better); mutation favored by evolution
+- -0.5 < delta_ll < +0.3: Neutral; likely tolerated
+- -1.5 < delta_ll < -0.5: Destabilizing (~+0.75-2.25 kcal/mol); proceed with caution
+- delta_ll < -1.5: Highly destabilizing (>+2.25 kcal/mol); likely deleterious
+- CAVEAT: ESM-2 ddG correlation with experiment is r~0.4-0.5. Use for ranking, not absolute prediction.
+- CAVEAT: ESM-2 cannot assess insertions/deletions. Only substitutions are scored.
+
+### Instability Index (Guruprasad et al., 1990)
+- <25: Highly stable protein
+- 25-40: Stable protein (threshold = 40)
+- 40-50: Marginally unstable
+- >50: Likely unstable in vitro
+
+### Solubility Score (CamSol-inspired)
+- >0.65: Soluble — suitable for aqueous formulation
+- 0.45-0.65: Borderline — may require formulation optimization
+- <0.45: Likely insoluble — engineering or refolding needed
+- Check aggregation-prone patches: stretches of 5+ residues with windowed CamSol < -0.8
+
+### AlphaFold pLDDT Interpretation
+- >90: Very high confidence — atomic-level accuracy expected
+- 70-90: Confident — backbone is reliable, side chains less so
+- 50-70: Low confidence — likely flexible/disordered loop or domain boundary
+- <50: Very low — predicted disorder or poor template coverage
+
+### Developability Risk Flags (prioritize by severity)
+- HIGH: unpaired cysteines (aggregation), large hydrophobic patches (>10 residues)
+- MEDIUM: N-glycosylation sequons, deamidation hotspots (NG/NS), DP acid-labile sites, charge patches
+- LOW: Met oxidation, DG isomerization, C-terminal Lys clipping, pyroglutamate
 
 For each finding:
 - State the finding clearly (prefix with 'Finding:')
