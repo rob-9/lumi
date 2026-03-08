@@ -38,7 +38,13 @@ class HitlEvent(BaseModel):
     agent_id: str
     confidence_score: float
     reason: str
-    status: str = "pending"  # pending | approved | rejected
+    finding_id: str = ""
+    status: Literal["pending", "approved", "rejected"] = "pending"
+
+
+class ReviewDecisionRequest(BaseModel):
+    status: Literal["approved", "rejected"]
+    feedback: str = ""
 
 
 class IntegrationEvent(BaseModel):
@@ -46,6 +52,17 @@ class IntegrationEvent(BaseModel):
     action: str
     status: str = "complete"
     detail: str = ""
+    image_url: str | None = None
+
+
+class ExpertReviewMessage(BaseModel):
+    finding_id: str
+    role: str  # "agent" | "expert"
+    name: str
+    title: str
+    text: str
+    channel: str = "#neuro-repurposing"
+    status: str = "in_progress"  # "in_progress" | "approved" | "revised" | "rejected"
 
 
 class Message(BaseModel):
@@ -56,6 +73,7 @@ class Message(BaseModel):
     agent_traces: list[AgentTrace] = Field(default_factory=list)
     hitl_events: list[HitlEvent] = Field(default_factory=list)
     integration_events: list[IntegrationEvent] = Field(default_factory=list)
+    expert_review_messages: list[ExpertReviewMessage] = Field(default_factory=list)
     sublab: str | None = None
 
 
