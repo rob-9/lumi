@@ -92,6 +92,57 @@ _TOOLS = [
             "required": ["sequence"],
         },
     },
+    # --- PyMOL: 3D structure rendering ---
+    {
+        "name": "render_protein_structure",
+        "description": "Render a protein structure from PDB with a named style preset.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "4-character PDB code."},
+                "style": {"type": "string", "description": "Style preset.", "default": "cartoon_rainbow"},
+                "width": {"type": "integer", "default": 1200},
+                "height": {"type": "integer", "default": 900},
+                "ray": {"type": "boolean", "default": True},
+            },
+            "required": ["pdb_id"],
+        },
+    },
+    {
+        "name": "render_protein_surface",
+        "description": "Render a molecular surface colored by chain, electrostatic potential, hydrophobicity, or element.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "PDB code."},
+                "color_by": {"type": "string", "description": "chain, electrostatic, hydrophobicity, or element.", "default": "chain"},
+            },
+            "required": ["pdb_id"],
+        },
+    },
+    {
+        "name": "render_mutation_sites",
+        "description": "Render a protein with mutation sites highlighted and labeled (e.g. K67N).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "PDB code."},
+                "mutations": {"type": "array", "items": {"type": "object"}, "description": "List of {chain, resi, wt, mut} dicts."},
+            },
+            "required": ["pdb_id", "mutations"],
+        },
+    },
+    {
+        "name": "fetch_pdb_info",
+        "description": "Fetch metadata about a PDB structure: chains, residue count, atom count, sequences.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "PDB code."},
+            },
+            "required": ["pdb_id"],
+        },
+    },
     # --- Tamarind Bio: computational job submission ---
     {
         "name": "tamarind_list_tools",
@@ -187,7 +238,8 @@ When analyzing a protein sequence:
 4. Predict solubility — flag aggregation-prone regions.
 5. Retrieve or predict the AlphaFold structure — identify disordered regions (low pLDDT).
 6. BLAST against SwissProt/PDB to identify homologs and assess conservation.
-7. Use code execution for embedding analysis, fitness scoring, or multi-objective ranking.
+7. Render structures with PyMOL — visualize mutations, surfaces, or overall fold quality.
+8. Use code execution for embedding analysis, fitness scoring, or multi-objective ranking.
 
 For each finding:
 - State the finding clearly (prefix with 'Finding:')

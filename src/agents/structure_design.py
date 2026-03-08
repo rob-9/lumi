@@ -64,6 +64,84 @@ _TOOLS = [
             "required": ["sequence"],
         },
     },
+    # --- PyMOL: 3D structure rendering ---
+    {
+        "name": "render_protein_structure",
+        "description": "Render a protein structure from PDB with a named style preset (cartoon_rainbow, publication, surface_electrostatic, etc.).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "4-character PDB code (e.g. '1UBQ', '7S4S')."},
+                "style": {"type": "string", "description": "Style preset: cartoon_rainbow, surface_electrostatic, surface_chain, secondary_structure, bfactor, chain_color, sticks, publication.", "default": "cartoon_rainbow"},
+                "width": {"type": "integer", "description": "Image width in pixels.", "default": 1200},
+                "height": {"type": "integer", "description": "Image height in pixels.", "default": 900},
+                "ray": {"type": "boolean", "description": "Whether to ray-trace (higher quality, slower).", "default": True},
+            },
+            "required": ["pdb_id"],
+        },
+    },
+    {
+        "name": "render_binding_site",
+        "description": "Render a close-up of a binding site with surrounding context. Binding residues shown as sticks with atom coloring.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "PDB code."},
+                "site_residues": {"type": "array", "items": {"type": "string"}, "description": "Residue numbers to highlight (e.g. ['45', '67', '112'])."},
+                "site_chain": {"type": "string", "description": "Chain ID containing the binding site.", "default": "A"},
+                "context_radius": {"type": "number", "description": "Angstrom radius around site to display.", "default": 8.0},
+            },
+            "required": ["pdb_id", "site_residues"],
+        },
+    },
+    {
+        "name": "align_structures",
+        "description": "Superimpose two PDB structures, render the alignment, and report RMSD in angstroms.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id_1": {"type": "string", "description": "First PDB code."},
+                "pdb_id_2": {"type": "string", "description": "Second PDB code."},
+            },
+            "required": ["pdb_id_1", "pdb_id_2"],
+        },
+    },
+    {
+        "name": "highlight_residues",
+        "description": "Highlight specific residues on a protein structure with colored sticks and labels.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "PDB code."},
+                "residues": {"type": "array", "items": {"type": "object"}, "description": "List of {chain, resi, color, label} dicts."},
+                "style": {"type": "string", "description": "Base style preset.", "default": "cartoon_rainbow"},
+            },
+            "required": ["pdb_id", "residues"],
+        },
+    },
+    {
+        "name": "render_mutation_sites",
+        "description": "Render a protein with mutation sites highlighted and labeled (e.g. K67N).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "PDB code."},
+                "mutations": {"type": "array", "items": {"type": "object"}, "description": "List of {chain, resi, wt, mut} dicts."},
+            },
+            "required": ["pdb_id", "mutations"],
+        },
+    },
+    {
+        "name": "fetch_pdb_info",
+        "description": "Fetch metadata about a PDB structure: chains, residue count, atom count, sequences.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "PDB code."},
+            },
+            "required": ["pdb_id"],
+        },
+    },
     # --- Tamarind Bio: computational job submission ---
     {
         "name": "tamarind_list_tools",
@@ -159,7 +237,8 @@ When performing structure-based analysis:
 3. If no experimental structure exists, retrieve AlphaFold prediction and assess confidence.
 4. Score the protein sequence with ESM-2 for per-residue confidence.
 5. Calculate biophysical properties relevant to design.
-6. Use code execution for structural analysis, distance calculations, or visualization prep.
+6. Render 3D structures with PyMOL — use render_protein_structure, render_binding_site, or align_structures for visual evidence.
+7. Use code execution for structural analysis, distance calculations, or visualization prep.
 
 For each finding:
 - State the finding clearly (prefix with 'Finding:')

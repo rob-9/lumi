@@ -82,6 +82,57 @@ _TOOLS = [
             "required": ["sequence"],
         },
     },
+    # --- PyMOL: 3D structure rendering ---
+    {
+        "name": "render_antibody_complex",
+        "description": "Render an antibody-antigen complex with differentiated coloring for heavy chain, light chain, antigen, and CDR loops.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "PDB code of the Ab-Ag complex."},
+                "antigen_chain": {"type": "string", "description": "Chain ID of the antigen.", "default": "A"},
+                "heavy_chain": {"type": "string", "description": "Chain ID of the heavy chain.", "default": "H"},
+                "light_chain": {"type": "string", "description": "Chain ID of the light chain.", "default": "L"},
+                "show_cdr_loops": {"type": "boolean", "description": "Highlight CDR loops (Kabat numbering).", "default": True},
+            },
+            "required": ["pdb_id"],
+        },
+    },
+    {
+        "name": "render_protein_structure",
+        "description": "Render a protein structure from PDB with a named style preset.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "4-character PDB code."},
+                "style": {"type": "string", "description": "Style preset.", "default": "cartoon_rainbow"},
+            },
+            "required": ["pdb_id"],
+        },
+    },
+    {
+        "name": "highlight_residues",
+        "description": "Highlight specific residues on a protein structure with colored sticks and labels.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "PDB code."},
+                "residues": {"type": "array", "items": {"type": "object"}, "description": "List of {chain, resi, color, label} dicts."},
+            },
+            "required": ["pdb_id", "residues"],
+        },
+    },
+    {
+        "name": "fetch_pdb_info",
+        "description": "Fetch metadata about a PDB structure: chains, residue count, atom count, sequences.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pdb_id": {"type": "string", "description": "PDB code."},
+            },
+            "required": ["pdb_id"],
+        },
+    },
 ]
 
 
@@ -110,7 +161,8 @@ When engineering an antibody:
 4. If mutations are proposed, predict their effects on stability and function.
 5. BLAST against germline databases to assess humanness and identify closest germline.
 6. Calculate biophysical properties of the variable domain.
-7. Use code execution for sequence alignment, humanness scoring, or CDR analysis.
+7. Render antibody-antigen complexes with PyMOL — visualize CDR loops, paratope, and epitope.
+8. Use code execution for sequence alignment, humanness scoring, or CDR analysis.
 
 For each finding:
 - State the finding clearly (prefix with 'Finding:')

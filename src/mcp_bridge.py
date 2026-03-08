@@ -362,6 +362,39 @@ try:
 except ImportError:
     logger.warning("BioRender MCP server not available (missing mcp package or Node.js?)")
 
+# -- PyMOL Structure (requires pymol-open-source via conda -- optional) -
+_HAS_PYMOL = False
+try:
+    from src.mcp_servers.pymol_structure.server import (
+        render_protein_structure,
+        render_protein_surface,
+        render_binding_site,
+        align_structures,
+        render_antibody_complex,
+        highlight_residues,
+        render_mutation_sites,
+        measure_distance,
+        generate_structure_movie,
+        fetch_pdb_info,
+    )
+    _HAS_PYMOL = True
+except ImportError:
+    logger.warning("PyMOL MCP server not available (install pymol-open-source via conda-forge)")
+
+# -- MockFlow / BioRender extras (conditional on BioRender server) -----
+_HAS_MOCKFLOW = False
+try:
+    from src.mcp_servers.biorender.server import (
+        generate_bio_diagram,
+        generate_signaling_flowchart,
+        generate_experiment_mindmap,
+        generate_data_table,
+        generate_pipeline_gantt,
+    )
+    _HAS_MOCKFLOW = True
+except ImportError:
+    logger.warning("MockFlow tools not available (missing mcp package or Node.js?)")
+
 # -- Cheminformatics (requires RDKit -- optional) ----------------------
 _HAS_CHEM = False
 try:
@@ -647,6 +680,31 @@ if _HAS_CHEM:
         "convert_molecule": convert_molecule,
     })
 
+# --- PyMOL Structure (conditional) ---
+if _HAS_PYMOL:
+    TOOL_REGISTRY.update({
+        "render_protein_structure": render_protein_structure,
+        "render_protein_surface": render_protein_surface,
+        "render_binding_site": render_binding_site,
+        "align_structures": align_structures,
+        "render_antibody_complex": render_antibody_complex,
+        "highlight_residues": highlight_residues,
+        "render_mutation_sites": render_mutation_sites,
+        "measure_distance": measure_distance,
+        "generate_structure_movie": generate_structure_movie,
+        "fetch_pdb_info": fetch_pdb_info,
+    })
+
+# --- MockFlow (conditional) ---
+if _HAS_MOCKFLOW:
+    TOOL_REGISTRY.update({
+        "generate_bio_diagram": generate_bio_diagram,
+        "generate_signaling_flowchart": generate_signaling_flowchart,
+        "generate_experiment_mindmap": generate_experiment_mindmap,
+        "generate_data_table": generate_data_table,
+        "generate_pipeline_gantt": generate_pipeline_gantt,
+    })
+
 
 # ===================================================================
 # Tool domain tagging
@@ -724,6 +782,17 @@ _tag("cheminformatics", [
     "compute_similarity", "substructure_search", "search_compound",
     "get_compound_bioactivity", "get_compound_safety", "search_zinc",
     "convert_molecule",
+])
+_tag("pymol", [
+    "render_protein_structure", "render_protein_surface", "render_binding_site",
+    "align_structures", "render_antibody_complex", "highlight_residues",
+    "render_mutation_sites", "measure_distance", "generate_structure_movie",
+    "fetch_pdb_info",
+])
+_tag("mockflow", [
+    "generate_bio_diagram", "generate_signaling_flowchart",
+    "generate_experiment_mindmap", "generate_data_table",
+    "generate_pipeline_gantt",
 ])
 
 

@@ -542,22 +542,32 @@ def render_results_tab() -> None:
     # --- Visual Context (#3, #4) --------------------------------------------
     st.subheader("Visual Context")
     if report.figures:
-        fig_cols = st.columns(min(len(report.figures), 3))
-        for i, fig in enumerate(report.figures):
-            with fig_cols[i % 3]:
-                with st.container(border=True):
-                    st.markdown(f"**{fig.get('title', 'Figure')}**")
-                    url = fig.get("image_url", "")
-                    if url:
-                        st.image(url, caption=fig.get("caption", ""), use_container_width=True)
-                    else:
-                        st.caption(fig.get("caption", ""))
+        # Separate figures by source: URL-based (BioRender/MockFlow) vs file-based (PyMOL)
+        url_figures = [f for f in report.figures if f.get("image_url")]
+        file_figures = [f for f in report.figures if f.get("file_path") and not f.get("image_url")]
+
+        if url_figures:
+            fig_cols = st.columns(min(len(url_figures), 3))
+            for i, fig in enumerate(url_figures):
+                with fig_cols[i % 3]:
+                    with st.container(border=True):
+                        st.markdown(f"**{fig.get('title', 'Figure')}**")
+                        st.image(fig["image_url"], caption=fig.get("caption", ""), use_container_width=True)
+
+        if file_figures:
+            st.markdown("**3D Structure Renders**")
+            struct_cols = st.columns(min(len(file_figures), 3))
+            for i, fig in enumerate(file_figures):
+                with struct_cols[i % 3]:
+                    with st.container(border=True):
+                        st.markdown(f"**{fig.get('title', 'Structure')}**")
+                        st.image(fig["file_path"], caption=fig.get("caption", ""), use_container_width=True)
     else:
         fig_cols = st.columns(3)
         figure_placeholders = [
             ("Pathway Diagram", "Signaling pathway for the target of interest"),
             ("Expression Heatmap", "Tissue/cell-type expression profile"),
-            ("Mechanism of Action", "Drug-target interaction illustration"),
+            ("3D Structure", "Protein structure rendering via PyMOL"),
         ]
         for col, (title, caption) in zip(fig_cols, figure_placeholders):
             with col:
