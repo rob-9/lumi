@@ -86,6 +86,41 @@ _TOOLS = [
             "required": ["pdb_id"],
         },
     },
+    {
+        "name": "search_proteins",
+        "description": "Search UniProt for proteins by keyword.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search keyword."},
+                "organism": {"type": "string", "description": "Organism filter."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "search_domains_by_name",
+        "description": "Search InterPro domains by name/keyword.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Domain name or keyword."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "get_pae",
+        "description": "Retrieve AlphaFold predicted aligned error (PAE) matrix.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "uniprot_id": {"type": "string", "description": "UniProt accession."},
+            },
+            "required": ["uniprot_id"],
+        },
+    },
 ]
 
 

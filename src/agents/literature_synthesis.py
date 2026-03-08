@@ -82,6 +82,53 @@ _TOOLS = [
             "required": ["query"],
         },
     },
+    {
+        "name": "get_references",
+        "description": "Get references cited by a paper from Semantic Scholar.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "paper_id": {"type": "string", "description": "Semantic Scholar paper ID, DOI, or PMID."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["paper_id"],
+        },
+    },
+    {
+        "name": "get_author_papers",
+        "description": "Get papers by a specific author.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "author_id": {"type": "string", "description": "Semantic Scholar author ID."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["author_id"],
+        },
+    },
+    {
+        "name": "get_article_citations",
+        "description": "Get citing articles from Europe PMC.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "source": {"type": "string", "description": "Source database (e.g. 'MED', 'PMC')."},
+                "identifier": {"type": "string", "description": "Article identifier."},
+            },
+            "required": ["source", "identifier"],
+        },
+    },
+    {
+        "name": "get_preprint_details",
+        "description": "Get full details of a bioRxiv/medRxiv preprint.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "doi": {"type": "string", "description": "Preprint DOI."},
+            },
+            "required": ["doi"],
+        },
+    },
 ]
 
 

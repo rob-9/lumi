@@ -100,6 +100,17 @@ _TOOLS = [
             "required": ["gene_symbol"],
         },
     },
+    {
+        "name": "depmap_gene_expression",
+        "description": "Get gene expression (TPM) across DepMap cell lines.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
 ]
 
 

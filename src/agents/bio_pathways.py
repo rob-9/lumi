@@ -120,6 +120,78 @@ _TOOLS = [
             "required": ["gene_list"],
         },
     },
+    {
+        "name": "get_kegg_pathways",
+        "description": "Retrieve KEGG pathways for a gene.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene": {"type": "string", "description": "Gene symbol."},
+            },
+            "required": ["gene"],
+        },
+    },
+    {
+        "name": "get_pathway_genes",
+        "description": "Get all genes in a KEGG pathway.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pathway_id": {"type": "string", "description": "KEGG pathway ID."},
+            },
+            "required": ["pathway_id"],
+        },
+    },
+    {
+        "name": "search_pathways",
+        "description": "Search WikiPathways by keyword.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search keyword."},
+                "organism": {"type": "string", "description": "Organism name."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "pathway_enrichment",
+        "description": "Run Reactome pathway enrichment analysis on a gene set.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "genes": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of gene symbols.",
+                },
+            },
+            "required": ["genes"],
+        },
+    },
+    {
+        "name": "quickgo_annotation_search",
+        "description": "Search QuickGO for GO annotations.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_id": {"type": "string", "description": "Gene identifier."},
+                "aspect": {"type": "string", "description": "GO aspect: BP, MF, or CC."},
+            },
+            "required": ["gene_id"],
+        },
+    },
+    {
+        "name": "quickgo_term_info",
+        "description": "Get detailed info about a GO term.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "go_id": {"type": "string", "description": "GO term ID (e.g. GO:0008150)."},
+            },
+            "required": ["go_id"],
+        },
+    },
 ]
 
 

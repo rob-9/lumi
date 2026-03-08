@@ -79,6 +79,31 @@ _TOOLS = [
             "required": ["gene"],
         },
     },
+    {
+        "name": "query_encode_experiments",
+        "description": "Search ENCODE for epigenomic experiments.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "target": {"type": "string", "description": "Target protein or histone mark."},
+                "assay_type": {"type": "string", "description": "Assay type filter (e.g. 'ChIP-seq')."},
+                "biosample": {"type": "string", "description": "Biosample filter."},
+            },
+            "required": ["target"],
+        },
+    },
+    {
+        "name": "search_geo_datasets",
+        "description": "Search NCBI GEO for gene expression datasets.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 

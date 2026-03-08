@@ -119,6 +119,54 @@ _TOOLS = [
             "required": ["gene_symbol"],
         },
     },
+    {
+        "name": "run_fba",
+        "description": "Run flux balance analysis on a metabolic model.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "model_id": {"type": "string", "description": "BiGG model identifier."},
+                "objective": {"type": "string", "description": "Objective function for FBA."},
+            },
+            "required": ["model_id"],
+        },
+    },
+    {
+        "name": "run_fva",
+        "description": "Run flux variability analysis on a metabolic model.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "model_id": {"type": "string", "description": "BiGG model identifier."},
+                "fraction_of_optimum": {"type": "number", "description": "Fraction of optimum for FVA."},
+            },
+            "required": ["model_id"],
+        },
+    },
+    {
+        "name": "simulate_gene_knockout",
+        "description": "Simulate single gene knockout.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "model_id": {"type": "string", "description": "BiGG model identifier."},
+                "gene_id": {"type": "string", "description": "Gene identifier to knock out."},
+            },
+            "required": ["model_id", "gene_id"],
+        },
+    },
+    {
+        "name": "simulate_reaction_knockout",
+        "description": "Simulate reaction knockout.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "model_id": {"type": "string", "description": "BiGG model identifier."},
+                "reaction_id": {"type": "string", "description": "Reaction identifier to knock out."},
+            },
+            "required": ["model_id", "reaction_id"],
+        },
+    },
 ]
 
 

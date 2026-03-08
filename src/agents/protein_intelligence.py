@@ -160,6 +160,29 @@ _TOOLS = [
             "required": ["filename", "file_content"],
         },
     },
+    {
+        "name": "get_pae",
+        "description": "Retrieve AlphaFold predicted aligned error (PAE) matrix.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "uniprot_id": {"type": "string", "description": "UniProt accession ID."},
+            },
+            "required": ["uniprot_id"],
+        },
+    },
+    {
+        "name": "tamarind_poll_until_complete",
+        "description": "Poll a Tamarind job until completion.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "job_id": {"type": "string", "description": "Tamarind job ID to poll."},
+                "timeout": {"type": "integer", "description": "Timeout in seconds."},
+            },
+            "required": ["job_id"],
+        },
+    },
 ]
 
 

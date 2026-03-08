@@ -133,6 +133,57 @@ _TOOLS = [
             "required": ["gene_symbol"],
         },
     },
+    {
+        "name": "plink_assoc",
+        "description": "Run PLINK association analysis on genotype data.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "bed_file": {"type": "string", "description": "Path to PLINK BED file."},
+                "pheno_file": {"type": "string", "description": "Path to phenotype file."},
+                "out_prefix": {"type": "string", "description": "Output file prefix."},
+            },
+            "required": ["bed_file", "pheno_file", "out_prefix"],
+        },
+    },
+    {
+        "name": "plink_pca",
+        "description": "Run PCA on genotype data using PLINK.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "bed_file": {"type": "string", "description": "Path to PLINK BED file."},
+                "n_components": {"type": "integer", "description": "Number of principal components."},
+                "out_prefix": {"type": "string", "description": "Output file prefix."},
+            },
+            "required": ["bed_file", "out_prefix"],
+        },
+    },
+    {
+        "name": "genebass_phenotype_genes",
+        "description": "Get gene-level association results for a phenotype from Genebass.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "phenotype_code": {"type": "string", "description": "Genebass phenotype code."},
+                "annotation": {"type": "string", "description": "Annotation type: pLoF, missense, or synonymous."},
+                "max_results": {"type": "integer", "description": "Maximum results to return."},
+            },
+            "required": ["phenotype_code"],
+        },
+    },
+    {
+        "name": "genebass_search_phenotypes",
+        "description": "Search Genebass for available phenotypes by keyword.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search keyword."},
+                "max_results": {"type": "integer", "description": "Maximum results to return."},
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 

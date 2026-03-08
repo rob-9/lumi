@@ -417,6 +417,11 @@ try:
         search_biorender_icons,
         search_biorender_templates,
         download_figure,
+        generate_bio_diagram,
+        generate_signaling_flowchart,
+        generate_experiment_mindmap,
+        generate_data_table,
+        generate_pipeline_gantt,
     )
     _HAS_BIORENDER = True
 except ImportError:
@@ -680,6 +685,11 @@ if _HAS_BIORENDER:
         "search_biorender_icons": search_biorender_icons,
         "search_biorender_templates": search_biorender_templates,
         "download_figure": download_figure,
+        "generate_bio_diagram": generate_bio_diagram,
+        "generate_signaling_flowchart": generate_signaling_flowchart,
+        "generate_experiment_mindmap": generate_experiment_mindmap,
+        "generate_data_table": generate_data_table,
+        "generate_pipeline_gantt": generate_pipeline_gantt,
     })
 
 # --- Alignment CLI (conditional) ---

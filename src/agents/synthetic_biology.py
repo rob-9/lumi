@@ -94,6 +94,50 @@ _TOOLS = [
             "required": ["sequence", "organism"],
         },
     },
+    {
+        "name": "list_available_models",
+        "description": "List available metabolic models from BiGG.",
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+    {
+        "name": "get_model_info",
+        "description": "Get metadata for a BiGG metabolic model.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "model_id": {"type": "string", "description": "BiGG model identifier."},
+            },
+            "required": ["model_id"],
+        },
+    },
+    {
+        "name": "run_fba",
+        "description": "Run flux balance analysis on a metabolic model.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "model_id": {"type": "string", "description": "BiGG model identifier."},
+                "objective": {"type": "string", "description": "Objective function for FBA."},
+            },
+            "required": ["model_id"],
+        },
+    },
+    {
+        "name": "simulate_gene_knockout",
+        "description": "Simulate single gene knockout in a metabolic model.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "model_id": {"type": "string", "description": "BiGG model identifier."},
+                "gene_id": {"type": "string", "description": "Gene identifier to knock out."},
+            },
+            "required": ["model_id", "gene_id"],
+        },
+    },
 ]
 
 

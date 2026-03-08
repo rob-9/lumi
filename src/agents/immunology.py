@@ -113,6 +113,40 @@ _TOOLS = [
             "required": ["disease_id"],
         },
     },
+    {
+        "name": "monarch_get_entity",
+        "description": "Get detailed entity information from Monarch Initiative.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "entity_id": {"type": "string", "description": "Monarch entity ID."},
+            },
+            "required": ["entity_id"],
+        },
+    },
+    {
+        "name": "hpo_search_terms",
+        "description": "Search HPO for phenotype terms by keyword.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "hpo_get_term",
+        "description": "Get details for an HPO term by ID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "term_id": {"type": "string", "description": "HPO term ID (e.g. HP:0001250)."},
+            },
+            "required": ["term_id"],
+        },
+    },
 ]
 
 

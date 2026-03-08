@@ -56,6 +56,66 @@ _TOOLS = [
             "required": ["gene"],
         },
     },
+    {
+        "name": "generate_volcano_plot",
+        "description": "Generate a volcano plot visualization.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "data": {"type": "object", "description": "Data for the volcano plot."},
+                "title": {"type": "string", "description": "Title for the plot."},
+            },
+            "required": ["data"],
+        },
+    },
+    {
+        "name": "generate_expression_heatmap",
+        "description": "Generate an expression heatmap.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "data": {"type": "object", "description": "Data for the heatmap."},
+                "title": {"type": "string", "description": "Title for the heatmap."},
+            },
+            "required": ["data"],
+        },
+    },
+    {
+        "name": "download_figure",
+        "description": "Download/export a generated figure.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "figure_id": {"type": "string", "description": "Identifier of the figure to download."},
+                "format": {"type": "string", "description": "Export format (e.g. 'png', 'svg', 'pdf')."},
+            },
+            "required": ["figure_id"],
+        },
+    },
+    {
+        "name": "search_biorender_icons",
+        "description": "Search BioRender for scientific icons.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "search_biorender_templates",
+        "description": "Search BioRender for figure templates.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 

@@ -64,6 +64,19 @@ _TOOLS = [
             "required": ["organism_or_agent"],
         },
     },
+    {
+        "name": "blast_protein",
+        "description": "Run BLAST protein search against NCBI databases.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {"type": "string", "description": "Protein sequence to search."},
+                "database": {"type": "string", "description": "BLAST database (e.g. 'nr', 'swissprot')."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["sequence"],
+        },
+    },
 ]
 
 

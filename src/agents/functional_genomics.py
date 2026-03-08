@@ -67,6 +67,89 @@ _TOOLS = [
             "required": ["gene"],
         },
     },
+    {
+        "name": "get_eqtls",
+        "description": "Retrieve eQTL data for a gene from GTEx.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene": {"type": "string", "description": "Gene symbol."},
+                "tissue": {"type": "string", "description": "GTEx tissue name."},
+            },
+            "required": ["gene"],
+        },
+    },
+    {
+        "name": "query_encode_experiments",
+        "description": "Search ENCODE for epigenomic experiments.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "target": {"type": "string", "description": "Target name."},
+                "assay_type": {"type": "string", "description": "Assay type (e.g. ChIP-seq, ATAC-seq)."},
+                "biosample": {"type": "string", "description": "Biosample name."},
+            },
+            "required": ["target"],
+        },
+    },
+    {
+        "name": "ucsc_search_genes",
+        "description": "Search UCSC Genome Browser for genes.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "genome": {"type": "string", "description": "Genome assembly (e.g. hg38).", "default": "hg38"},
+                "query": {"type": "string", "description": "Gene search query."},
+            },
+            "required": ["genome", "query"],
+        },
+    },
+    {
+        "name": "jaspar_search_motifs",
+        "description": "Search JASPAR for transcription factor binding motifs.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "tax_group": {"type": "string", "description": "Taxonomic group."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "jaspar_search_by_tf",
+        "description": "Search JASPAR motifs by transcription factor name.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "tf_name": {"type": "string", "description": "Transcription factor name."},
+            },
+            "required": ["tf_name"],
+        },
+    },
+    {
+        "name": "remap_search_peaks",
+        "description": "Search ReMap for regulatory element ChIP-seq peaks.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene": {"type": "string", "description": "Gene symbol to search for peaks."},
+                "assembly": {"type": "string", "description": "Genome assembly (e.g. 'hg38')."},
+            },
+            "required": ["gene"],
+        },
+    },
+    {
+        "name": "jaspar_get_pfm",
+        "description": "Get position frequency matrix from JASPAR.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "matrix_id": {"type": "string", "description": "JASPAR matrix ID (e.g. 'MA0139.1')."},
+            },
+            "required": ["matrix_id"],
+        },
+    },
 ]
 
 

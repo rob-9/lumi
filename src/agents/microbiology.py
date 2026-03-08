@@ -80,6 +80,75 @@ _TOOLS = [
             "required": ["protein"],
         },
     },
+    {
+        "name": "muscle_align",
+        "description": "Run MUSCLE multiple sequence alignment.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "fasta_input": {"type": "string", "description": "FASTA-formatted sequences to align."},
+                "output_format": {"type": "string", "description": "Output format for the alignment."},
+            },
+            "required": ["fasta_input"],
+        },
+    },
+    {
+        "name": "fasttree_build",
+        "description": "Build an approximate phylogenetic tree with FastTree.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "alignment_file": {"type": "string", "description": "Path to the multiple sequence alignment file."},
+            },
+            "required": ["alignment_file"],
+        },
+    },
+    {
+        "name": "worms_search_taxa",
+        "description": "Search WoRMS for marine species taxonomy.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Taxonomic search query."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "worms_get_record",
+        "description": "Get detailed taxonomy record from WoRMS.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "aphia_id": {"type": "integer", "description": "WoRMS AphiaID."},
+            },
+            "required": ["aphia_id"],
+        },
+    },
+    {
+        "name": "iqtree_build",
+        "description": "Build a maximum-likelihood phylogenetic tree with IQ-TREE.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "alignment_file": {"type": "string", "description": "Path to the multiple sequence alignment file."},
+                "model": {"type": "string", "description": "Substitution model (e.g. 'GTR+G', 'LG+I+G4')."},
+            },
+            "required": ["alignment_file"],
+        },
+    },
+    {
+        "name": "iqtree_model_test",
+        "description": "Run IQ-TREE model selection to find best substitution model.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "alignment_file": {"type": "string", "description": "Path to the multiple sequence alignment file."},
+            },
+            "required": ["alignment_file"],
+        },
+    },
 ]
 
 

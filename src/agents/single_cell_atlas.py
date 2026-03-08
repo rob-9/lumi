@@ -66,6 +66,31 @@ _TOOLS = [
             "required": ["query"],
         },
     },
+    {
+        "name": "query_encode_experiments",
+        "description": "Search ENCODE for epigenomic experiments.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "target": {"type": "string", "description": "Target name."},
+                "assay_type": {"type": "string", "description": "Assay type (e.g. ChIP-seq, ATAC-seq)."},
+                "biosample": {"type": "string", "description": "Biosample name."},
+            },
+            "required": ["target"],
+        },
+    },
+    {
+        "name": "get_eqtls",
+        "description": "Retrieve eQTL data for a gene from GTEx.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene": {"type": "string", "description": "Gene symbol."},
+                "tissue": {"type": "string", "description": "GTEx tissue name."},
+            },
+            "required": ["gene"],
+        },
+    },
 ]
 
 

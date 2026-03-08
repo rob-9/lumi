@@ -106,6 +106,69 @@ _TOOLS = [
             "required": ["protein_sequence", "organism"],
         },
     },
+    {
+        "name": "simulate_gene_knockout",
+        "description": "Simulate single gene knockout in a metabolic model.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "model_id": {"type": "string", "description": "BiGG model identifier."},
+                "gene_id": {"type": "string", "description": "Gene identifier to knock out."},
+            },
+            "required": ["model_id", "gene_id"],
+        },
+    },
+    {
+        "name": "add_heterologous_pathway",
+        "description": "Add a heterologous pathway to a metabolic model.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "model_id": {"type": "string", "description": "BiGG model identifier."},
+                "reactions": {"type": "array", "items": {"type": "string"}, "description": "List of reaction identifiers to add."},
+            },
+            "required": ["model_id", "reactions"],
+        },
+    },
+    {
+        "name": "remap_search_peaks",
+        "description": "Search ReMap for regulatory element ChIP-seq peaks.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene": {"type": "string", "description": "Gene symbol to search for peaks."},
+                "assembly": {"type": "string", "description": "Genome assembly (e.g. 'hg38')."},
+            },
+            "required": ["gene"],
+        },
+    },
+    {
+        "name": "jaspar_search_motifs",
+        "description": "Search JASPAR for transcription factor binding motifs.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "tax_group": {"type": "string", "description": "Taxonomic group."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "ucsc_get_track_data",
+        "description": "Get track data from UCSC Genome Browser.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "genome": {"type": "string", "description": "Genome assembly (e.g. 'hg38')."},
+                "track": {"type": "string", "description": "Track name."},
+                "chrom": {"type": "string", "description": "Chromosome (e.g. 'chr17')."},
+                "start": {"type": "integer", "description": "Start position."},
+                "end": {"type": "integer", "description": "End position."},
+            },
+            "required": ["genome", "track", "chrom", "start", "end"],
+        },
+    },
 ]
 
 

@@ -106,6 +106,63 @@ _TOOLS = [
             "required": ["mirna_id"],
         },
     },
+    {
+        "name": "ucsc_search_genes",
+        "description": "Search UCSC Genome Browser for genes.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "genome": {"type": "string", "description": "Genome assembly (e.g. 'hg38')."},
+                "query": {"type": "string", "description": "Gene search query."},
+            },
+            "required": ["genome", "query"],
+        },
+    },
+    {
+        "name": "ucsc_list_tracks",
+        "description": "List available tracks for a genome assembly in UCSC.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "genome": {"type": "string", "description": "Genome assembly (e.g. 'hg38')."},
+            },
+            "required": ["genome"],
+        },
+    },
+    {
+        "name": "mirtarbase_get_interaction",
+        "description": "Get detailed miRTarBase interaction record by ID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "mirtarbase_id": {"type": "string", "description": "miRTarBase interaction ID."},
+            },
+            "required": ["mirtarbase_id"],
+        },
+    },
+    {
+        "name": "jaspar_search_motifs",
+        "description": "Search JASPAR for transcription factor binding motifs.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query for motifs."},
+                "tax_group": {"type": "string", "description": "Taxonomic group filter."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "jaspar_get_matrix",
+        "description": "Get a JASPAR position weight matrix by ID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "matrix_id": {"type": "string", "description": "JASPAR matrix ID."},
+            },
+            "required": ["matrix_id"],
+        },
+    },
 ]
 
 

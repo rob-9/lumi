@@ -89,6 +89,56 @@ _TOOLS = [
             "required": ["drug_a", "drug_b"],
         },
     },
+    {
+        "name": "get_drug_indications",
+        "description": "Get approved indications for a drug from SIDER.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "drug": {"type": "string", "description": "Drug name."},
+            },
+            "required": ["drug"],
+        },
+    },
+    {
+        "name": "get_drug_label_sections",
+        "description": "Retrieve specific sections from FDA drug labeling.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "drug": {"type": "string", "description": "Drug name."},
+                "sections": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of label section names.",
+                },
+            },
+            "required": ["drug"],
+        },
+    },
+    {
+        "name": "get_safety_summary",
+        "description": "Get aggregated safety summary for a gene/target.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene": {"type": "string", "description": "Gene symbol."},
+            },
+            "required": ["gene"],
+        },
+    },
+    {
+        "name": "ddinter_search_drug",
+        "description": "Search DDInter for a drug by name.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "drug_name": {"type": "string", "description": "Drug name."},
+                "max_results": {"type": "integer", "description": "Maximum results to return."},
+            },
+            "required": ["drug_name"],
+        },
+    },
 ]
 
 

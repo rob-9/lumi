@@ -100,6 +100,41 @@ _TOOLS = [
             "required": ["disease_id"],
         },
     },
+    {
+        "name": "mpd_search_measurements",
+        "description": "Search Mouse Phenome Database for phenotype measurements.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query for phenotype measurements."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "mpd_get_strain_data",
+        "description": "Get strain-specific phenotype data from MPD.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "strain": {"type": "string", "description": "Mouse strain name."},
+                "measurement_id": {"type": "string", "description": "MPD measurement identifier."},
+            },
+            "required": ["strain"],
+        },
+    },
+    {
+        "name": "mpd_get_ontology_terms",
+        "description": "Get MPD ontology terms for phenotype classification.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query for ontology terms."},
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 

@@ -64,6 +64,28 @@ _TOOLS = [
             "required": ["sequence"],
         },
     },
+    {
+        "name": "predict_structure_alphafold",
+        "description": "Predict/retrieve protein structure from AlphaFold DB.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {"type": "string", "description": "Protein amino acid sequence."},
+            },
+            "required": ["sequence"],
+        },
+    },
+    {
+        "name": "get_protein_sequence",
+        "description": "Retrieve amino acid sequence from UniProt.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "uniprot_id": {"type": "string", "description": "UniProt accession ID."},
+            },
+            "required": ["uniprot_id"],
+        },
+    },
 ]
 
 

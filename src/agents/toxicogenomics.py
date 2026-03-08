@@ -77,6 +77,42 @@ _TOOLS = [
             "required": ["variant_id"],
         },
     },
+    {
+        "name": "query_chemical_diseases",
+        "description": "Query CTD for chemical-disease associations.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "chemical": {"type": "string", "description": "Chemical name."},
+            },
+            "required": ["chemical"],
+        },
+    },
+    {
+        "name": "disgenet_disease_genes",
+        "description": "Get gene associations for a disease from DisGeNET.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "disease_id": {"type": "string", "description": "Disease ID."},
+                "min_score": {"type": "number", "description": "Minimum GDA score (0-1)."},
+                "max_results": {"type": "integer", "description": "Maximum results to return."},
+            },
+            "required": ["disease_id"],
+        },
+    },
+    {
+        "name": "disgenet_search_diseases",
+        "description": "Search DisGeNET for diseases by keyword.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search keyword."},
+                "max_results": {"type": "integer", "description": "Maximum results to return."},
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 

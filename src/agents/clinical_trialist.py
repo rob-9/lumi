@@ -59,6 +59,43 @@ _TOOLS = [
             "required": ["query"],
         },
     },
+    {
+        "name": "search_trials_by_target",
+        "description": "Search ClinicalTrials.gov for trials targeting a specific protein.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "target": {"type": "string", "description": "Target protein name."},
+                "status": {"type": "string", "description": "Trial status filter."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["target"],
+        },
+    },
+    {
+        "name": "get_article_details",
+        "description": "Get full metadata for a PubMed article by PMID.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pmid": {"type": "string", "description": "PubMed ID."},
+            },
+            "required": ["pmid"],
+        },
+    },
+    {
+        "name": "search_preprints",
+        "description": "Search bioRxiv/medRxiv for preprints.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "server": {"type": "string", "description": "Preprint server: 'biorxiv' or 'medrxiv'."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 

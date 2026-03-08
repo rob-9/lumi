@@ -78,6 +78,51 @@ _TOOLS = [
             "required": ["query"],
         },
     },
+    {
+        "name": "pride_search_projects",
+        "description": "Search PRIDE proteomics repository for projects.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "pride_get_project",
+        "description": "Get details for a PRIDE proteomics project.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "accession": {"type": "string", "description": "PRIDE project accession."},
+            },
+            "required": ["accession"],
+        },
+    },
+    {
+        "name": "get_compound_safety",
+        "description": "Get safety data for a PubChem compound.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "cid": {"type": "string", "description": "PubChem compound ID."},
+            },
+            "required": ["cid"],
+        },
+    },
+    {
+        "name": "unichem_search_inchikey",
+        "description": "Search UniChem by InChIKey.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "inchikey": {"type": "string", "description": "InChIKey to search."},
+            },
+            "required": ["inchikey"],
+        },
+    },
 ]
 
 

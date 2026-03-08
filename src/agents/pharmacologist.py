@@ -112,6 +112,65 @@ _TOOLS = [
             "required": ["gene_symbol"],
         },
     },
+    {
+        "name": "search_compound",
+        "description": "Search PubChem for a compound by name or identifier.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Compound name or identifier."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "get_compound_bioactivity",
+        "description": "Get bioactivity data for a PubChem compound.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "cid": {"type": "string", "description": "PubChem compound ID."},
+            },
+            "required": ["cid"],
+        },
+    },
+    {
+        "name": "compute_fingerprint",
+        "description": "Compute Morgan molecular fingerprint from SMILES.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "smiles": {"type": "string", "description": "SMILES string."},
+                "radius": {"type": "integer", "description": "Morgan fingerprint radius."},
+                "n_bits": {"type": "integer", "description": "Number of bits in fingerprint."},
+            },
+            "required": ["smiles"],
+        },
+    },
+    {
+        "name": "unichem_lookup",
+        "description": "Look up a chemical compound across databases via UniChem.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "compound_id": {"type": "string", "description": "Compound identifier."},
+                "source_id": {"type": "integer", "description": "UniChem source ID."},
+            },
+            "required": ["compound_id", "source_id"],
+        },
+    },
+    {
+        "name": "bindingdb_search_by_target_name",
+        "description": "Search BindingDB targets by name.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "target_name": {"type": "string", "description": "Target name."},
+                "max_results": {"type": "integer", "description": "Maximum results to return."},
+            },
+            "required": ["target_name"],
+        },
+    },
 ]
 
 

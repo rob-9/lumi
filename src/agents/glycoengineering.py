@@ -78,6 +78,29 @@ _TOOLS = [
             "required": ["query"],
         },
     },
+    {
+        "name": "get_protein_domains",
+        "description": "Retrieve InterPro/Pfam domain annotations for a protein.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "uniprot_id": {"type": "string", "description": "UniProt accession ID."},
+            },
+            "required": ["uniprot_id"],
+        },
+    },
+    {
+        "name": "unichem_lookup",
+        "description": "Look up a chemical compound across databases via UniChem.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "compound_id": {"type": "string", "description": "Compound identifier."},
+                "source_id": {"type": "integer", "description": "Source database ID."},
+            },
+            "required": ["compound_id", "source_id"],
+        },
+    },
 ]
 
 

@@ -115,6 +115,64 @@ _TOOLS = [
             "required": ["gene_symbol"],
         },
     },
+    {
+        "name": "get_cbioportal_survival",
+        "description": "Get survival data from cBioPortal for a gene in a study.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene": {"type": "string", "description": "HGNC gene symbol."},
+                "study_id": {"type": "string", "description": "cBioPortal study ID."},
+            },
+            "required": ["gene", "study_id"],
+        },
+    },
+    {
+        "name": "search_cbioportal_studies",
+        "description": "Search cBioPortal for available cancer studies.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "depmap_search_cell_lines",
+        "description": "Search DepMap for cancer cell lines by name or lineage.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Cell line name or keyword."},
+                "lineage": {"type": "string", "description": "Lineage filter."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "depmap_gene_expression",
+        "description": "Get gene expression (TPM) across DepMap cell lines.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "gene_symbol": {"type": "string", "description": "Gene symbol."},
+            },
+            "required": ["gene_symbol"],
+        },
+    },
+    {
+        "name": "get_pathway_info",
+        "description": "Get pathway information from WikiPathways.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pathway_id": {"type": "string", "description": "WikiPathways pathway ID (e.g. 'WP254')."},
+            },
+            "required": ["pathway_id"],
+        },
+    },
 ]
 
 

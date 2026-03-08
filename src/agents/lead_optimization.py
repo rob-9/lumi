@@ -106,6 +106,65 @@ _TOOLS = [
             "required": ["uniprot_id"],
         },
     },
+    {
+        "name": "substructure_search",
+        "description": "Search for molecules containing a substructure using RDKit SMARTS.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "smarts": {"type": "string", "description": "SMARTS pattern for substructure query."},
+                "library": {"type": "string", "description": "Compound library to search."},
+            },
+            "required": ["smarts"],
+        },
+    },
+    {
+        "name": "search_compound",
+        "description": "Search PubChem for compounds by name or identifier.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Compound name or identifier."},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "convert_molecule",
+        "description": "Convert between molecule representations (SMILES/InChI/MOL).",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "molecule": {"type": "string", "description": "Input molecule string."},
+                "input_format": {"type": "string", "description": "Input format (e.g. SMILES, InChI, MOL)."},
+                "output_format": {"type": "string", "description": "Output format (e.g. SMILES, InChI, MOL)."},
+            },
+            "required": ["molecule", "input_format", "output_format"],
+        },
+    },
+    {
+        "name": "check_drug_likeness",
+        "description": "Evaluate drug-likeness rules (Lipinski, Veber, etc.) for a molecule.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "smiles": {"type": "string", "description": "SMILES string of the molecule."},
+            },
+            "required": ["smiles"],
+        },
+    },
+    {
+        "name": "search_zinc",
+        "description": "Search ZINC15 database for purchasable compounds.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query."},
+                "max_results": {"type": "integer", "description": "Maximum number of results to return."},
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 

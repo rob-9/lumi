@@ -103,6 +103,28 @@ _TOOLS = [
             "required": ["job_id"],
         },
     },
+    {
+        "name": "get_pae",
+        "description": "Retrieve AlphaFold predicted aligned error (PAE) matrix.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "uniprot_id": {"type": "string", "description": "UniProt accession ID."},
+            },
+            "required": ["uniprot_id"],
+        },
+    },
+    {
+        "name": "predict_solubility",
+        "description": "Predict protein solubility from sequence.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "sequence": {"type": "string", "description": "Amino acid sequence."},
+            },
+            "required": ["sequence"],
+        },
+    },
 ]
 
 
