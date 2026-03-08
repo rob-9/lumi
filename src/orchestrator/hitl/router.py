@@ -73,8 +73,18 @@ class ConfidenceRouter:
         self,
         reports: list[DivisionReport],
         query_id: str = "",
+        review_flags: list[dict] | None = None,
+        red_team_results: list[dict] | None = None,
     ) -> HITLResult:
         """Scan all division reports for low-confidence findings.
+
+        Args:
+            reports: Division reports to evaluate.
+            query_id: Pipeline query identifier.
+            review_flags: Per-claim flags from ReviewPanel (unsupported,
+                overconfident, contradiction, methodology issues).
+            red_team_results: Structured results from RedTeamAgent with
+                per-claim verdicts (VERIFIED/CONTESTED/REFUTED/UNVERIFIABLE).
 
         Returns an ``HITLResult`` containing:
         - claims that passed automatically
@@ -94,6 +104,11 @@ class ConfidenceRouter:
                 human_feedback={},
             )
 
+        # Build lookup sets from ReviewPanel flags and RedTeam results
+        # for claims that should be downgraded regardless of score
+        review_downgrade = self._build_review_downgrade_set(review_flags or [])
+        red_team_downgrade = self._build_red_team_downgrade_set(red_team_results or [])
+
         auto_passed: list[Claim] = []
         soft_flagged: list[tuple[Claim, str]] = []  # (claim, division_name)
         hard_flagged: list[tuple[Claim, str]] = []
@@ -103,11 +118,26 @@ class ConfidenceRouter:
             for specialist_result in report.specialist_results:
                 for claim in specialist_result.findings:
                     score = claim.confidence.score
-                    if score >= self.config.auto_threshold:
+                    claim_key = claim.claim_text[:200].lower().strip()
+
+                    # Check if ReviewPanel or RedTeam flagged this claim
+                    forced_flag = None
+                    if claim_key in red_team_downgrade:
+                        forced_flag = red_team_downgrade[claim_key]
+                    elif any(k in claim_key or claim_key in k for k in review_downgrade):
+                        forced_flag = "soft"
+
+                    if forced_flag == "hard":
+                        # RedTeam REFUTED → force to hard threshold
+                        hard_flagged.append((claim, report.division_name))
+                    elif forced_flag == "soft":
+                        # ReviewPanel flagged or RedTeam CONTESTED → soft flag
+                        soft_flagged.append((claim, report.division_name))
+                    elif score >= self.config.auto_threshold:
                         auto_passed.append(claim)
                     elif score >= self.config.soft_threshold:
-                        # Between soft and auto — optional review
-                        auto_passed.append(claim)
+                        # Between soft and auto — NOW soft-flagged (was auto-pass)
+                        soft_flagged.append((claim, report.division_name))
                     elif score >= self.config.hard_threshold:
                         soft_flagged.append((claim, report.division_name))
                     else:
@@ -262,6 +292,44 @@ class ConfidenceRouter:
             # Adaptive polling: slow down after initial burst
             if elapsed > 30:
                 poll_interval = min(poll_interval * 1.5, 15.0)
+
+    @staticmethod
+    def _build_review_downgrade_set(review_flags: list[dict]) -> set[str]:
+        """Build a set of claim snippets that ReviewPanel flagged.
+
+        Any claim matching these snippets gets soft-flagged regardless of
+        its confidence score.
+        """
+        downgrade: set[str] = set()
+        for flag in review_flags:
+            snippet = flag.get("claim_snippet", "").lower().strip()
+            if snippet and flag.get("severity") in ("HIGH", "MEDIUM"):
+                downgrade.add(snippet)
+        return downgrade
+
+    @staticmethod
+    def _build_red_team_downgrade_set(
+        red_team_results: list[dict],
+    ) -> dict[str, str]:
+        """Build a map of claim text → downgrade level from RedTeam verdicts.
+
+        Returns:
+            dict mapping claim_text[:200].lower() → 'hard' | 'soft'
+            - REFUTED → hard (blocks pipeline)
+            - CONTESTED / UNVERIFIABLE → soft (advisory review)
+            - VERIFIED → not included (no downgrade)
+        """
+        downgrade: dict[str, str] = {}
+        for result in red_team_results:
+            verdict = result.get("verdict", "").upper()
+            claim_key = result.get("claim_text", "")[:200].lower().strip()
+            if not claim_key:
+                continue
+            if verdict == "REFUTED":
+                downgrade[claim_key] = "hard"
+            elif verdict in ("CONTESTED", "UNVERIFIABLE"):
+                downgrade[claim_key] = "soft"
+        return downgrade
 
     @staticmethod
     def _extract_all_claims(reports: list[DivisionReport]) -> list[Claim]:

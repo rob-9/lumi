@@ -59,6 +59,9 @@ from src.agents.bioengineering import create_bioengineering_agent
 # Division 11: Imaging
 from src.agents.bioimaging import create_bioimaging_agent
 
+# Review — adversarial verification
+from src.agents.red_team import create_red_team_agent
+
 __all__ = [
     # Division 1: Target Identification
     "create_statistical_genetics_agent",
@@ -104,6 +107,8 @@ __all__ = [
     "create_bioengineering_agent",
     # Division 11: Imaging
     "create_bioimaging_agent",
+    # Review
+    "create_red_team_agent",
 ]
 
 # Convenience mapping: agent name -> factory function
@@ -141,4 +146,5 @@ AGENT_REGISTRY: dict[str, callable] = {
     "synthetic_biology": create_synthetic_biology_agent,
     "bioengineering": create_bioengineering_agent,
     "bioimaging": create_bioimaging_agent,
+    "red_team": create_red_team_agent,
 }

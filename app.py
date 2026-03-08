@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 import streamlit as st
 
 from src.factory import SUBLAB_REGISTRY
+from src.orchestrator.hitl.review_queue import ReviewQueue, ReviewStatus
 from src.sublabs.base import Sublab
 from src.utils.types import (
     AgentResult,
@@ -831,22 +832,137 @@ def render_monitor_tab() -> None:
 # ---------------------------------------------------------------------------
 
 def render_expert_review_tab() -> None:
-    """Human-in-the-loop review queue for low-confidence findings."""
-    # TODO: Wire to HITL routing system (#2)
+    """Human-in-the-loop review queue wired to the actual ReviewQueue."""
     st.header("Human-in-the-Loop Review Queue")
 
+    # Get the live ReviewQueue from session state (set by pipeline runner)
+    review_queue: ReviewQueue | None = st.session_state.get("review_queue")
+
     report: FinalReport | None = st.session_state.mock_report
-    if report is None:
+    if report is None and review_queue is None:
         st.info("No findings to review. Submit a query first.")
         return
 
-    # Collect flagged findings (confidence < 0.5)
+    # --- Mode 1: Live ReviewQueue (wired to pipeline) ---
+    if review_queue is not None:
+        all_requests = review_queue.get_all()
+        pending = [r for r in all_requests if r.status == ReviewStatus.PENDING]
+        resolved = [r for r in all_requests if r.status != ReviewStatus.PENDING]
+
+        # Summary metrics
+        metric_cols = st.columns(4)
+        with metric_cols[0]:
+            st.metric("Total Flagged", len(all_requests))
+        with metric_cols[1]:
+            st.metric("Blocking", review_queue.blocking_count)
+        with metric_cols[2]:
+            st.metric("Pending", len(pending))
+        with metric_cols[3]:
+            st.metric("Resolved", len(resolved))
+
+        if not all_requests:
+            st.success("All findings passed confidence thresholds. No expert review needed.")
+            return
+
+        st.divider()
+
+        # Show pending requests first (blocking ones at top)
+        sorted_requests = sorted(all_requests, key=lambda r: (
+            r.status != ReviewStatus.PENDING,  # pending first
+            not r.is_blocking,  # blocking first
+            r.claim.confidence.score,  # lowest confidence first
+        ))
+
+        for req in sorted_requests:
+            review_key = f"live_{req.request_id}"
+            with st.container(border=True):
+                # Header with blocking indicator
+                if req.is_blocking and req.status == ReviewStatus.PENDING:
+                    st.markdown(f":red[**BLOCKING**] — Pipeline paused on this finding")
+                elif req.status == ReviewStatus.PENDING:
+                    st.markdown(f":orange[**ADVISORY**] — Will proceed with caveat if not reviewed")
+
+                st.markdown(f"**[{req.division_name}]** Finding from `{req.claim.agent_id}`")
+                st.markdown(req.claim.claim_text)
+
+                flag_cols = st.columns([1, 1, 2])
+                with flag_cols[0]:
+                    st.markdown(confidence_badge(req.claim.confidence.level))
+                    st.caption(f"Score: {req.claim.confidence.score:.0%}")
+                with flag_cols[1]:
+                    st.caption(f"ID: `{req.request_id}`")
+                with flag_cols[2]:
+                    st.caption(f"Reason: {req.reason}")
+
+                if req.status == ReviewStatus.PENDING:
+                    # Expert feedback form
+                    feedback = st.text_area(
+                        "Expert feedback / revised claim",
+                        key=f"feedback_{review_key}",
+                        placeholder="Provide your assessment or a revised version of this finding...",
+                        height=80,
+                    )
+
+                    btn_cols = st.columns(3)
+                    with btn_cols[0]:
+                        if st.button("Approve", key=f"approve_{review_key}", type="primary"):
+                            import asyncio
+                            asyncio.get_event_loop().run_until_complete(
+                                review_queue.resolve_request(
+                                    req.request_id, ReviewStatus.APPROVED,
+                                    feedback=feedback, reviewer="streamlit_ui",
+                                )
+                            )
+                            st.session_state.hitl_reviews[review_key] = {"verdict": "approved", "feedback": feedback}
+                            st.rerun()
+                    with btn_cols[1]:
+                        if st.button("Revise", key=f"revise_{review_key}"):
+                            import asyncio
+                            asyncio.get_event_loop().run_until_complete(
+                                review_queue.resolve_request(
+                                    req.request_id, ReviewStatus.REVISED,
+                                    feedback=feedback, reviewer="streamlit_ui",
+                                )
+                            )
+                            st.session_state.hitl_reviews[review_key] = {"verdict": "revised", "feedback": feedback}
+                            st.rerun()
+                    with btn_cols[2]:
+                        if st.button("Reject", key=f"reject_{review_key}"):
+                            import asyncio
+                            asyncio.get_event_loop().run_until_complete(
+                                review_queue.resolve_request(
+                                    req.request_id, ReviewStatus.REJECTED,
+                                    feedback=feedback, reviewer="streamlit_ui",
+                                )
+                            )
+                            st.session_state.hitl_reviews[review_key] = {"verdict": "rejected", "feedback": feedback}
+                            st.rerun()
+                else:
+                    # Already resolved — show verdict
+                    verdict_colors = {
+                        ReviewStatus.APPROVED: "green",
+                        ReviewStatus.REVISED: "blue",
+                        ReviewStatus.REJECTED: "red",
+                        ReviewStatus.SKIPPED: "gray",
+                    }
+                    color = verdict_colors.get(req.status, "gray")
+                    st.markdown(f":{color}[Resolved: **{req.status.value}**]")
+                    if req.feedback:
+                        st.caption(f"Expert feedback: {req.feedback}")
+                    if req.reviewer:
+                        st.caption(f"Reviewed by: {req.reviewer}")
+
+        return
+
+    # --- Mode 2: Fallback — scan FinalReport for low-confidence claims ---
+    if report is None:
+        return
+
     flagged = [
         (i, claim) for i, claim in enumerate(report.key_findings)
         if claim.confidence.score < 0.5
     ]
 
-    # Summary metrics
     reviewed = sum(1 for k in flagged if f"review_{k[0]}" in st.session_state.hitl_reviews)
     metric_cols = st.columns(3)
     with metric_cols[0]:
@@ -875,7 +991,6 @@ def render_expert_review_tab() -> None:
             with flag_cols[1]:
                 st.caption(f"Reason: Confidence below 50% threshold")
 
-            # Expert feedback form
             feedback = st.text_area(
                 "Expert feedback",
                 key=f"feedback_{idx}",
@@ -894,7 +1009,6 @@ def render_expert_review_tab() -> None:
                 if st.button("Request More Evidence", key=f"more_{idx}"):
                     st.session_state.hitl_reviews[review_key] = {"verdict": "needs_evidence", "feedback": feedback}
 
-            # Show existing review
             if review_key in st.session_state.hitl_reviews:
                 review = st.session_state.hitl_reviews[review_key]
                 verdict_colors = {"approved": "green", "rejected": "red", "needs_evidence": "orange"}

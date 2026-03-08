@@ -138,10 +138,14 @@ class ReviewPanel:
     """Adversarial review agent that performs 3-pass quality assessment.
 
     Uses Sonnet for the review passes to balance quality with cost.
+    After the 3-pass review, the panel can optionally invoke the RedTeamAgent
+    to independently fact-check contested claims using real tools.
     """
 
     def __init__(self) -> None:
         self.llm = LLMClient()
+        # Populated after review — maps claim text snippets to issues
+        self.flagged_claims: list[dict] = []
 
     async def review(
         self,
@@ -188,13 +192,81 @@ class ReviewPanel:
             reports_text, methodology_findings, evidence_findings
         )
 
+        # Extract per-claim flags for HITL integration
+        self.flagged_claims = self._extract_claim_flags(
+            methodology_findings, evidence_findings
+        )
+
         logger.info(
-            "[ReviewPanel] Verdict: %s (%d issues, %d missing analyses)",
+            "[ReviewPanel] Verdict: %s (%d issues, %d missing analyses, %d claim flags)",
             verdict.verdict.value,
             len(verdict.issues),
             len(verdict.missing_analyses),
+            len(self.flagged_claims),
         )
         return verdict
+
+    def _extract_claim_flags(
+        self, methodology: dict, evidence: dict
+    ) -> list[dict]:
+        """Extract per-claim flags from review passes for HITL routing.
+
+        Returns a list of dicts with keys:
+        - division_name: str
+        - claim_snippet: str (first 200 chars of the claim)
+        - flag_type: 'unsupported' | 'overconfident' | 'methodology' | 'contradiction'
+        - severity: 'HIGH' | 'MEDIUM' | 'LOW'
+        - description: str
+        """
+        flags: list[dict] = []
+
+        # From evidence pass: unsupported and overconfident claims
+        for div_name, assessment in evidence.get("evidence_assessments", {}).items():
+            for claim_desc in assessment.get("unsupported_claims", []):
+                flags.append({
+                    "division_name": div_name,
+                    "claim_snippet": str(claim_desc)[:200],
+                    "flag_type": "unsupported",
+                    "severity": "HIGH",
+                    "description": f"Unsupported claim: {claim_desc}",
+                })
+            for claim_desc in assessment.get("overconfident_claims", []):
+                flags.append({
+                    "division_name": div_name,
+                    "claim_snippet": str(claim_desc)[:200],
+                    "flag_type": "overconfident",
+                    "severity": "MEDIUM",
+                    "description": f"Overconfident claim: {claim_desc}",
+                })
+
+        # From evidence pass: contradictions
+        for contradiction in evidence.get("contradictions", []):
+            severity = contradiction.get("severity", "MEDIUM")
+            flags.append({
+                "division_name": ", ".join(contradiction.get("divisions_involved", [])),
+                "claim_snippet": str(contradiction.get("claim_a", ""))[:200],
+                "flag_type": "contradiction",
+                "severity": severity,
+                "description": (
+                    f"Contradiction: '{contradiction.get('claim_a', '')}' vs "
+                    f"'{contradiction.get('claim_b', '')}'"
+                ),
+            })
+
+        # From methodology pass: division-level methodology issues
+        for div_name, assessment in methodology.get("division_assessments", {}).items():
+            score = assessment.get("methodology_score", 1.0)
+            if score < 0.5:
+                for issue in assessment.get("issues", []):
+                    flags.append({
+                        "division_name": div_name,
+                        "claim_snippet": "",
+                        "flag_type": "methodology",
+                        "severity": "HIGH" if score < 0.3 else "MEDIUM",
+                        "description": f"Methodology issue: {issue}",
+                    })
+
+        return flags
 
     # ------------------------------------------------------------------
     # Review passes

@@ -176,6 +176,8 @@ class CSOOrchestrator:
         self.hitl_router = ConfidenceRouter(config=self.hitl_config)
         self.doc_manager: DocumentManager | None = None
         self.hitl_result: HITLResult | None = None
+        # Expose the review queue for UI wiring
+        self.review_queue = self.hitl_router.queue
 
     # ------------------------------------------------------------------
     # Main entry point
@@ -247,11 +249,25 @@ class CSOOrchestrator:
             review_verdict = await reviewer.review(analytical_reports, design_reports)
             await self.doc_manager.on_review(review_verdict)
 
+            # Phase 7a: Red Team — independent fact-checking of contested claims
+            red_team_results: list[dict] = []
+            if reviewer.flagged_claims:
+                logger.info(
+                    "[CSO] Phase 7a — Red Team verification (%d flagged claims)",
+                    len(reviewer.flagged_claims),
+                )
+                red_team_results = await self._run_red_team(
+                    analytical_reports, reviewer.flagged_claims
+                )
+
             # Phase 7.5: HITL — route low-confidence findings to humans
+            # Now fed by ReviewPanel flags + RedTeam results + confidence scores
             logger.info("[CSO] Phase 7.5 — Human-in-the-loop routing")
             self.hitl_result = await self.hitl_router.evaluate_reports(
                 reports=analytical_reports,
                 query_id=self._query_id,
+                review_flags=reviewer.flagged_claims,
+                red_team_results=red_team_results,
             )
             logger.info("[CSO] %s", self.hitl_result.summary())
 
@@ -626,6 +642,104 @@ class CSOOrchestrator:
                 )
 
         return reports
+
+    # ------------------------------------------------------------------
+    # Phase 7a: Red Team
+    # ------------------------------------------------------------------
+
+    async def _run_red_team(
+        self,
+        reports: list[DivisionReport],
+        flagged_claims: list[dict],
+    ) -> list[dict]:
+        """Run the RedTeamAgent to independently verify contested claims.
+
+        Args:
+            reports: Division reports containing the claims.
+            flagged_claims: Per-claim flags from ReviewPanel.
+
+        Returns:
+            List of dicts with keys: claim_text, verdict, adjusted_confidence,
+            rationale.  Verdict is one of VERIFIED, CONTESTED, REFUTED,
+            UNVERIFIABLE.
+        """
+        from src.agents.red_team import create_red_team_agent
+        from src.mcp_bridge import TOOL_REGISTRY
+
+        red_team = create_red_team_agent()
+
+        # Register tools from bridge
+        for tool_def in list(red_team.tools):
+            name = tool_def.get("name", "")
+            if name in TOOL_REGISTRY and name != "execute_code":
+                red_team._tool_registry[name] = TOOL_REGISTRY[name]
+
+        # Build investigation task from flagged claims
+        claims_text = []
+        for i, flag in enumerate(flagged_claims[:15], 1):  # Cap at 15
+            claims_text.append(
+                f"{i}. [{flag.get('division_name', 'Unknown')}] "
+                f"({flag.get('flag_type', 'unknown')}, {flag.get('severity', 'MEDIUM')}): "
+                f"{flag.get('description', '')}"
+            )
+
+        # Also include low-confidence claims from reports
+        for report in reports:
+            for sr in report.specialist_results:
+                for claim in sr.findings:
+                    if claim.confidence.score < 0.5:
+                        claims_text.append(
+                            f"- [{report.division_name}] "
+                            f"(confidence={claim.confidence.score:.0%}): "
+                            f"{claim.claim_text[:300]}"
+                        )
+
+        investigation_task = Task(
+            task_id=f"red_team_{self._query_id}",
+            description=(
+                "Investigate and fact-check the following contested or "
+                "low-confidence claims from the analysis pipeline. For each "
+                "claim, use your tools to independently search for supporting "
+                "or contradicting evidence. Return a structured verdict for "
+                "each claim.\n\n"
+                "CLAIMS TO INVESTIGATE:\n" + "\n".join(claims_text[:20])
+            ),
+            priority=Priority.HIGH,
+            division="review",
+            agent="red_team",
+        )
+
+        logger.info("[CSO] RedTeam investigating %d claims", len(claims_text[:20]))
+        result = await red_team.execute(investigation_task)
+
+        # Parse RedTeam findings into structured verdicts
+        red_team_verdicts: list[dict] = []
+        for finding in result.findings:
+            verdict = "CONTESTED"  # Default
+            text = finding.claim_text.upper()
+            if "VERIFIED" in text:
+                verdict = "VERIFIED"
+            elif "REFUTED" in text:
+                verdict = "REFUTED"
+            elif "UNVERIFIABLE" in text:
+                verdict = "UNVERIFIABLE"
+
+            red_team_verdicts.append({
+                "claim_text": finding.claim_text,
+                "verdict": verdict,
+                "adjusted_confidence": finding.confidence.score,
+                "rationale": finding.claim_text,
+            })
+
+        logger.info(
+            "[CSO] RedTeam results: %d verified, %d contested, %d refuted, %d unverifiable",
+            sum(1 for v in red_team_verdicts if v["verdict"] == "VERIFIED"),
+            sum(1 for v in red_team_verdicts if v["verdict"] == "CONTESTED"),
+            sum(1 for v in red_team_verdicts if v["verdict"] == "REFUTED"),
+            sum(1 for v in red_team_verdicts if v["verdict"] == "UNVERIFIABLE"),
+        )
+
+        return red_team_verdicts
 
     # ------------------------------------------------------------------
     # Phase 8: Refinement
