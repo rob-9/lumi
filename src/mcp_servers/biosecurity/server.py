@@ -911,14 +911,49 @@ async def screen_virulence_factors(sequence: str) -> dict[str, Any]:
 # ===================================================================
 
 
+# Wassenaar Arrangement dual-use list (Category 1.C.1 biological agents/toxins)
+WASSENAAR_CONTROLLED: list[dict[str, str]] = [
+    {"name": "Bacillus anthracis", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Brucella abortus", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Brucella melitensis", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Brucella suis", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Burkholderia mallei", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Burkholderia pseudomallei", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Chlamydia psittaci", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Clostridium botulinum", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Coccidioides immitis", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Coxiella burnetii", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Francisella tularensis", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Rickettsia prowazekii", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Yersinia pestis", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Ebola virus", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Marburg virus", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Variola virus", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Nipah virus", "category": "1.C.1", "control": "dual_use_biological"},
+    {"name": "Hendra virus", "category": "1.C.1", "control": "dual_use_biological"},
+    # Toxins
+    {"name": "Abrin", "category": "1.C.1", "control": "dual_use_toxin"},
+    {"name": "Botulinum toxin", "category": "1.C.1", "control": "dual_use_toxin"},
+    {"name": "Cholera toxin", "category": "1.C.1", "control": "dual_use_toxin"},
+    {"name": "Ricin", "category": "1.C.1", "control": "dual_use_toxin"},
+    {"name": "Saxitoxin", "category": "1.C.1", "control": "dual_use_toxin"},
+    {"name": "Shiga toxin", "category": "1.C.1", "control": "dual_use_toxin"},
+    {"name": "Staphylococcal enterotoxin", "category": "1.C.1", "control": "dual_use_toxin"},
+    {"name": "T-2 toxin", "category": "1.C.1", "control": "dual_use_toxin"},
+    {"name": "Tetrodotoxin", "category": "1.C.1", "control": "dual_use_toxin"},
+]
+
+
 @mcp.tool()
 async def check_bwc_compliance(organism_or_agent: str) -> dict[str, Any]:
-    """Check an organism, toxin, or biological agent against BWC and Australia Group lists.
+    """Check an organism, toxin, or biological agent against BWC, Australia Group,
+    and Wassenaar Arrangement dual-use lists.
 
     Performs rule-based matching against:
     - Biological Weapons Convention (BWC) controlled agents
     - Australia Group (AG) export control lists (human, animal, plant pathogens & toxins)
     - CDC/USDA Select Agent list
+    - Wassenaar Arrangement dual-use list (Category 1.C.1)
 
     Args:
         organism_or_agent: Name of organism, toxin, or agent to check
@@ -928,29 +963,39 @@ async def check_bwc_compliance(organism_or_agent: str) -> dict[str, Any]:
         query_lower = organism_or_agent.lower().strip()
         query_words = set(query_lower.split())
 
+        def _match(name_lower: str) -> str | None:
+            name_words = set(name_lower.split())
+            if query_lower in name_lower or name_lower in query_lower:
+                return "exact"
+            if query_words & name_words and len(query_words & name_words) / max(len(query_words), 1) >= 0.5:
+                return "partial"
+            return None
+
         # ---- Check BWC / Australia Group ----
         bwc_matches = []
         for agent in BWC_CONTROLLED_AGENTS:
-            agent_lower = agent["name"].lower()
-            agent_words = set(agent_lower.split())
-            if query_lower in agent_lower or agent_lower in query_lower:
-                bwc_matches.append({**agent, "match_type": "exact"})
-            elif query_words & agent_words and len(query_words & agent_words) / max(len(query_words), 1) >= 0.5:
-                bwc_matches.append({**agent, "match_type": "partial"})
+            match_type = _match(agent["name"].lower())
+            if match_type:
+                bwc_matches.append({**agent, "match_type": match_type})
 
         # ---- Check Select Agent list ----
         sa_matches = []
         for agent in SELECT_AGENTS:
-            agent_lower = agent["name"].lower()
-            agent_words = set(agent_lower.split())
-            if query_lower in agent_lower or agent_lower in query_lower:
-                sa_matches.append({**agent, "match_type": "exact"})
-            elif query_words & agent_words and len(query_words & agent_words) / max(len(query_words), 1) >= 0.5:
-                sa_matches.append({**agent, "match_type": "partial"})
+            match_type = _match(agent["name"].lower())
+            if match_type:
+                sa_matches.append({**agent, "match_type": match_type})
+
+        # ---- Check Wassenaar Arrangement ----
+        wa_matches = []
+        for entry in WASSENAAR_CONTROLLED:
+            match_type = _match(entry["name"].lower())
+            if match_type:
+                wa_matches.append({**entry, "match_type": match_type})
 
         # ---- Determine compliance status ----
         exact_bwc = [m for m in bwc_matches if m["match_type"] == "exact"]
         exact_sa = [m for m in sa_matches if m["match_type"] == "exact"]
+        exact_wa = [m for m in wa_matches if m["match_type"] == "exact"]
 
         compliance_issues = []
         if exact_bwc:
@@ -965,11 +1010,16 @@ async def check_bwc_compliance(organism_or_agent: str) -> dict[str, Any]:
                 f"CDC/USDA Select Agent ({', '.join(cats)}): "
                 "possession/use/transfer requires FSAP registration"
             )
+        if exact_wa:
+            compliance_issues.append(
+                f"Wassenaar Arrangement Category {exact_wa[0]['category']}: "
+                "dual-use controlled item — export license required by participating states"
+            )
 
-        if exact_bwc or exact_sa:
+        if exact_bwc or exact_sa or exact_wa:
             status = "RESTRICTED"
             risk = "CRITICAL"
-        elif bwc_matches or sa_matches:
+        elif bwc_matches or sa_matches or wa_matches:
             status = "REVIEW_REQUIRED"
             risk = "HIGH"
         else:
@@ -978,7 +1028,7 @@ async def check_bwc_compliance(organism_or_agent: str) -> dict[str, Any]:
 
         # Build regulatory summary
         regulations = []
-        if exact_bwc or any(m for m in bwc_matches if m["match_type"] == "exact"):
+        if exact_bwc:
             regulations.extend([
                 "Biological Weapons Convention (BWC) - prohibited for offensive use",
                 "Australia Group export controls - export license required",
@@ -990,16 +1040,24 @@ async def check_bwc_compliance(organism_or_agent: str) -> dict[str, Any]:
                 "Personnel reliability program (PRP) required for access",
                 "Biosafety and security plan required",
             ])
+        if exact_wa:
+            regulations.extend([
+                "Wassenaar Arrangement dual-use goods list (Category 1.C.1)",
+                "National export control legislation of participating states applies",
+            ])
 
+        total_bwc = len(exact_bwc)
+        total_sa = len(exact_sa)
+        total_wa = len(exact_wa)
         summary = (
-            f"BWC/AG compliance check for '{organism_or_agent}': Status = {status}. "
-            f"{len(exact_bwc)} BWC/AG matches, {len(exact_sa)} Select Agent matches. "
+            f"BWC/AG/Wassenaar compliance check for '{organism_or_agent}': Status = {status}. "
+            f"{total_bwc} BWC/AG matches, {total_sa} Select Agent matches, {total_wa} Wassenaar matches. "
         )
         if compliance_issues:
             summary += "Issues: " + "; ".join(compliance_issues) + ". "
         if status == "NO_RESTRICTIONS_FOUND":
             summary += (
-                "No matches found on BWC, Australia Group, or Select Agent lists. "
+                "No matches found on BWC, Australia Group, Select Agent, or Wassenaar lists. "
                 "Note: absence from these lists does not guarantee unrestricted use -- "
                 "always consult institutional biosafety committees (IBC) and export control offices."
             )
@@ -1012,6 +1070,7 @@ async def check_bwc_compliance(organism_or_agent: str) -> dict[str, Any]:
                 "risk_level": risk,
                 "bwc_ag_matches": bwc_matches,
                 "select_agent_matches": sa_matches,
+                "wassenaar_matches": wa_matches,
                 "compliance_issues": compliance_issues,
                 "applicable_regulations": regulations,
                 "recommendation": (
@@ -1022,7 +1081,7 @@ async def check_bwc_compliance(organism_or_agent: str) -> dict[str, Any]:
                     else "No restrictions identified, but always follow institutional biosafety policies."
                 ),
             },
-            source="Lumi Biosecurity (BWC + AG + FSAP)",
+            source="Lumi Biosecurity (BWC + AG + Wassenaar + FSAP)",
             source_id=organism_or_agent,
             confidence=0.92,
         )
