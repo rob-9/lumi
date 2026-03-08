@@ -74,6 +74,9 @@ class SlackNotifier:
         self.bot_token = bot_token or os.environ.get("LUMI_SLACK_BOT_TOKEN", "")
         self._mcp_send: Any = None  # Will be set if MCP Slack server is wired
 
+        # Posted thread metadata — used by SlackListener to track replies
+        self.last_posted_threads: list[dict[str, str]] = []
+
         # Load routing table from env or constructor
         self.routing_table = routing_table or self._load_routing_table()
 
@@ -126,7 +129,7 @@ class SlackNotifier:
             div = getattr(req, "division_name", "") or "General"
             by_division.setdefault(div, []).append(req)
 
-        any_sent = False
+        posted_threads: list[dict[str, str]] = []
 
         for division_name, div_requests in by_division.items():
             target_channel = self._get_channel_for_division(division_name)
@@ -149,13 +152,15 @@ class SlackNotifier:
                 f"({len(blocking)} blocking, {len(non_blocking)} advisory)"
             )
 
-            sent = await self._send_message(
+            result = await self._send_message(
                 text=text_fallback, blocks=blocks, channel_override=target_channel
             )
-            if sent:
-                any_sent = True
+            if result and result.get("thread_ts"):
+                posted_threads.append(result)
 
-        return any_sent
+        # Store posted threads so the SlackListener can track them
+        self.last_posted_threads = posted_threads
+        return len(posted_threads) > 0
 
     async def notify_timeout(
         self,
@@ -311,13 +316,18 @@ class SlackNotifier:
         text: str,
         blocks: list[dict[str, Any]] | None = None,
         channel_override: str = "",
-    ) -> bool:
+    ) -> dict[str, str]:
         """Send a message via the best available transport.
 
         Args:
             text: Fallback text for the message.
             blocks: Slack Block Kit blocks.
             channel_override: Send to this channel instead of the default.
+
+        Returns:
+            Dict with "channel" and "thread_ts" if sent successfully,
+            empty dict otherwise.  The thread_ts is needed by the
+            SlackListener to monitor for expert replies.
 
         Tries in order: MCP Slack server → direct Slack API → log fallback.
         """
@@ -326,13 +336,17 @@ class SlackNotifier:
         # 1. Try MCP sender
         if self._mcp_send is not None:
             try:
-                await self._mcp_send(
+                result = await self._mcp_send(
                     channel=target_channel,
                     text=text,
                     blocks=json.dumps(blocks) if blocks else None,
                 )
                 logger.info("[Slack] Sent via MCP to %s: %s", target_channel, text[:100])
-                return True
+                # Try to extract thread_ts from MCP result
+                thread_ts = ""
+                if isinstance(result, dict):
+                    thread_ts = result.get("ts", "") or result.get("thread_ts", "")
+                return {"channel": target_channel, "thread_ts": thread_ts} if thread_ts else {"channel": target_channel, "thread_ts": ""}
             except Exception as exc:
                 logger.warning("[Slack] MCP send failed: %s", exc)
 
@@ -347,17 +361,20 @@ class SlackNotifier:
         logger.info("[Slack] (no transport configured) [%s] Message: %s", target_channel, text)
         if blocks:
             logger.info("[Slack] Blocks: %s", json.dumps(blocks, indent=2)[:500])
-        return False
+        return {}
 
     async def _send_via_api(
         self,
         text: str,
         blocks: list[dict[str, Any]] | None = None,
         channel_override: str = "",
-    ) -> bool:
-        """Send message directly via Slack Web API."""
+    ) -> dict[str, str]:
+        """Send message directly via Slack Web API.
+
+        Returns dict with "channel" and "thread_ts" on success, empty dict on failure.
+        """
         if not _HAS_HTTPX:
-            return False
+            return {}
 
         payload: dict[str, Any] = {
             "channel": channel_override or self.channel,
@@ -378,8 +395,10 @@ class SlackNotifier:
             )
             data = resp.json()
             if data.get("ok"):
-                logger.info("[Slack] Message sent to %s", self.channel)
-                return True
+                thread_ts = data.get("ts", "")
+                channel = data.get("channel", channel_override or self.channel)
+                logger.info("[Slack] Message sent to %s (ts=%s)", channel, thread_ts)
+                return {"channel": channel, "thread_ts": thread_ts}
             else:
                 logger.error("[Slack] API error: %s", data.get("error", "unknown"))
-                return False
+                return {}

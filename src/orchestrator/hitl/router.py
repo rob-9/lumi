@@ -18,6 +18,7 @@ from src.utils.types import (
 )
 
 from .review_queue import ReviewQueue, ReviewRequest, ReviewStatus
+from .slack_listener import SlackListener
 from .slack_notifier import SlackNotifier
 
 logger = logging.getLogger("lumi.hitl.router")
@@ -68,6 +69,8 @@ class ConfidenceRouter:
         self.notifier = slack_notifier or SlackNotifier(
             channel=self.config.slack_channel,
         )
+        self.listener = SlackListener(review_queue=self.queue)
+        self._listener_task: asyncio.Task | None = None
 
     async def evaluate_reports(
         self,
@@ -203,6 +206,17 @@ class ConfidenceRouter:
                 query_id=query_id,
             )
 
+            # Start Slack listener to capture expert replies
+            for thread_info in self.notifier.last_posted_threads:
+                ch = thread_info.get("channel", "")
+                ts = thread_info.get("thread_ts", "")
+                if ch and ts:
+                    self.listener.track_thread(channel=ch, thread_ts=ts)
+
+            if self.listener._tracked_threads:
+                self._listener_task = self.listener.start()
+                logger.info("[HITL] SlackListener started for %d threads", len(self.listener._tracked_threads))
+
         # Block on hard-flagged findings
         blocked_claims: list[Claim] = []
         if hard_requests:
@@ -255,6 +269,11 @@ class ConfidenceRouter:
                 requests=[r for r in soft_requests if r.status == ReviewStatus.PENDING],
                 query_id=query_id,
             )
+
+        # Stop the Slack listener — all reviews processed
+        if self.listener.is_running:
+            self.listener.stop()
+            logger.info("[HITL] SlackListener stopped")
 
         return HITLResult(
             auto_passed=auto_passed,
