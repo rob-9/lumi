@@ -2,59 +2,59 @@
 
 /* ── Dark theme (default) ── */
 :root {
-  --bg: #0e1015;
-  --bg-card: #16181e;
-  --bg-hover: #1e2028;
-  --bg-input: #1a1c24;
-  --border: #282a34;
-  --border-hover: #3a3d4a;
-  --border-focus: #5a9b8a;
-  --text: #e2e4e9;
-  --text-secondary: #a0a4b0;
-  --text-muted: #6b6f7e;
-  --accent: #5a9b8a;
-  --accent-light: #162a24;
-  --accent-dark: #7ec4ae;
+  --bg: #0e0d13;
+  --bg-card: #15141c;
+  --bg-hover: #1e1c28;
+  --bg-input: #191822;
+  --border: #2a2838;
+  --border-hover: #3d3a4e;
+  --border-focus: #9b8ac4;
+  --text: #e4e2ec;
+  --text-secondary: #a8a4b8;
+  --text-muted: #6e6a80;
+  --accent: #9b8ac4;
+  --accent-light: #1e1a2e;
+  --accent-dark: #c4b5e8;
   --green: #22c55e;
   --green-bg: #0c2618;
   --orange: #f59e0b;
   --orange-bg: #271d08;
   --red: #ef4444;
   --red-bg: #260e0e;
-  --sidebar-bg: #0b0d12;
-  --sidebar-text: #c8d4e2;
-  --sidebar-text-muted: #6b7f99;
-  --sidebar-hover: #161a22;
-  --sidebar-active: #1c2230;
+  --sidebar-bg: #0a0a10;
+  --sidebar-text: #ccc8de;
+  --sidebar-text-muted: #7a769a;
+  --sidebar-hover: #161420;
+  --sidebar-active: #1e1c2e;
   color-scheme: dark;
 }
 
 /* ── Light theme ── */
 [data-theme="light"] {
-  --bg: #faf8f5;
+  --bg: #f8f6fb;
   --bg-card: #ffffff;
-  --bg-hover: #f0ece6;
-  --bg-input: #f7f5f2;
-  --border: #e0d9cf;
-  --border-hover: #c8bfb2;
-  --border-focus: #4a7c6f;
-  --text: #2c2418;
-  --text-secondary: #5c5044;
-  --text-muted: #9c9083;
-  --accent: #4a7c6f;
-  --accent-light: #e8f0ec;
-  --accent-dark: #3a6355;
+  --bg-hover: #eee8f5;
+  --bg-input: #f4f0f9;
+  --border: #d8d0e4;
+  --border-hover: #c2b8d4;
+  --border-focus: #7c6aaf;
+  --text: #1e1828;
+  --text-secondary: #4a4060;
+  --text-muted: #8a80a0;
+  --accent: #7c6aaf;
+  --accent-light: #ede8f6;
+  --accent-dark: #5c4a8f;
   --green: #16a34a;
   --green-bg: #dcfce7;
   --orange: #d97706;
   --orange-bg: #fef3c7;
   --red: #dc2626;
   --red-bg: #fef2f2;
-  --sidebar-bg: #1a2332;
-  --sidebar-text: #c8d4e2;
-  --sidebar-text-muted: #6b7f99;
-  --sidebar-hover: #243044;
-  --sidebar-active: #2a3a52;
+  --sidebar-bg: #1a1826;
+  --sidebar-text: #d0cce0;
+  --sidebar-text-muted: #7a769a;
+  --sidebar-hover: #242030;
+  --sidebar-active: #2e2a40;
   color-scheme: light;
 }
 
@@ -286,7 +286,7 @@ body {
 
 /* Smooth border glow for focus states */
 .focus-glow:focus-within {
-  box-shadow: 0 0 0 3px rgba(74, 124, 111, 0.12);
+  box-shadow: 0 0 0 3px rgba(155, 138, 196, 0.2);
 }
 
 /* Active accent indicator */
