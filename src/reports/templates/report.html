@@ -443,8 +443,9 @@
           <table><tr>
             <td><span class="conf-badge conf-badge-{{ claim.confidence.level.value|lower }}">{{ claim.confidence.level.value }}</span></td>
             <td style="padding: 0 6px;">
+              {% set conf_width = (claim.confidence.score * 100)|int %}
               <span class="conf-track">
-                <span class="conf-fill conf-fill-{{ claim.confidence.level.value|lower }}" style="width: {{ (claim.confidence.score * 100)|int }}%;"></span>
+                <span class="conf-fill conf-fill-{{ claim.confidence.level.value|lower }}" style="width:{{ conf_width }}%"></span>
               </span>
             </td>
             <td><span class="conf-pct">{{ "%.0f"|format(claim.confidence.score * 100) }}%</span></td>
