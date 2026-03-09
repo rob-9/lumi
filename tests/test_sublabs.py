@@ -18,6 +18,7 @@ from src.factory import (
     SUBLAB_REGISTRY,
 )
 from src.sublabs.assay_troubleshooting import _classify_query
+from src.sublabs.regulatory_submissions import _classify_regulatory_query
 from src.utils.types import Phase
 
 
@@ -292,6 +293,127 @@ class TestAssayTroubleshootingPhaseRouting:
     def test_dependencies_reference_valid_phases(self, divisions):
         sl = create_sublab("Assay Troubleshooting", divisions=divisions)
         for query in AssayTroubleshootingSublab.examples:
+            phases = sl._build_phases(query)
+            phase_ids = {p.phase_id for p in phases}
+            for p in phases:
+                for dep in p.dependencies:
+                    assert dep in phase_ids, (
+                        f"Phase {p.phase_id} depends on non-existent {dep} "
+                        f"for query: {query}"
+                    )
+
+
+# ---------------------------------------------------------------------------
+# Regulatory Submissions — query classification & phase routing
+# ---------------------------------------------------------------------------
+
+
+class TestRegulatoryQueryClassification:
+    def test_toxicology_keywords(self):
+        cats = _classify_regulatory_query("Review hepatotoxicity signals for kinase inhibitors")
+        assert "toxicology" in cats
+
+    def test_moa_keywords(self):
+        cats = _classify_regulatory_query("Compile mechanism of action safety assessment")
+        assert "moa" in cats
+
+    def test_clinical_safety_keywords(self):
+        cats = _classify_regulatory_query("Analyze FAERS adverse event reports for anti-PD1 class")
+        assert "clinical_safety" in cats
+
+    def test_regulatory_strategy_keywords(self):
+        cats = _classify_regulatory_query("Assess breakthrough therapy designation eligibility for IND filing")
+        assert "regulatory_strategy" in cats
+
+    def test_multiple_categories(self):
+        cats = _classify_regulatory_query(
+            "Review hepatotoxicity and mechanism of action for IND submission"
+        )
+        assert "toxicology" in cats
+        assert "moa" in cats
+
+    def test_general_fallback(self):
+        cats = _classify_regulatory_query("Prepare a safety review for this compound")
+        assert "general" in cats
+
+    def test_categories_ordered_by_relevance(self):
+        cats = _classify_regulatory_query(
+            "Evaluate hepatotoxicity cardiotoxicity nephrotoxicity and mechanism of action"
+        )
+        # toxicology has more keyword hits than moa
+        assert cats.index("toxicology") < cats.index("moa")
+
+
+class TestRegulatorySubmissionsPhaseRouting:
+    def test_tox_query_starts_with_tox_review(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        phases = sl._build_phases("Review hepatotoxicity signals")
+        assert phases[0].name == "Toxicology Literature Review"
+
+    def test_moa_query_gets_moa_phase(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        phases = sl._build_phases("Compile mechanism of action safety assessment")
+        phase_names = [p.name for p in phases]
+        assert any("Mechanism of Action" in n for n in phase_names)
+
+    def test_clinical_safety_query_gets_clinical_phase(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        phases = sl._build_phases("Analyze FAERS adverse event reports")
+        phase_names = [p.name for p in phases]
+        assert any("Clinical Safety" in n for n in phase_names)
+
+    def test_regulatory_strategy_query_gets_strategy_phase(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        phases = sl._build_phases("Assess breakthrough therapy IND filing pathway")
+        phase_names = [p.name for p in phases]
+        assert any("Regulatory Strategy" in n for n in phase_names)
+
+    def test_general_query_gets_moa_and_clinical(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        phases = sl._build_phases("Prepare a safety review for this compound")
+        phase_names = [p.name for p in phases]
+        assert any("Mechanism of Action" in n for n in phase_names)
+        assert any("Clinical Safety" in n for n in phase_names)
+
+    def test_always_has_tox_review_first(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        for query in RegulatorySubmissionsSublab.examples:
+            phases = sl._build_phases(query)
+            assert phases[0].name == "Toxicology Literature Review"
+
+    def test_always_has_literature_compilation(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        for query in RegulatorySubmissionsSublab.examples:
+            phases = sl._build_phases(query)
+            phase_names = [p.name for p in phases]
+            assert any("Literature" in n for n in phase_names)
+
+    def test_always_ends_with_compilation(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        for query in [
+            "Review hepatotoxicity signals",
+            "Compile mechanism of action safety",
+            "Analyze FAERS adverse events",
+        ]:
+            phases = sl._build_phases(query)
+            assert "Compilation" in phases[-1].name or "Gap" in phases[-1].name
+
+    def test_compilation_phase_depends_on_all_prior(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        phases = sl._build_phases("Review hepatotoxicity for kinase inhibitor class")
+        compilation_phase = phases[-1]
+        prior_ids = [p.phase_id for p in phases[:-1]]
+        assert set(prior_ids).issubset(set(compilation_phase.dependencies))
+
+    def test_phase_ids_are_sequential(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        phases = sl._build_phases("test query")
+        ids = [p.phase_id for p in phases]
+        assert ids == list(range(1, len(phases) + 1))
+
+    def test_dependencies_reference_valid_phases(self, divisions):
+        sl = create_sublab("Regulatory Submissions", divisions=divisions)
+        for query in RegulatorySubmissionsSublab.examples:
             phases = sl._build_phases(query)
             phase_ids = {p.phase_id for p in phases}
             for p in phases:
