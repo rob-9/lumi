@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from api.models import AgentInfo, IntegrationInfo, SublabInfo, ToolInfo
 
@@ -34,8 +35,8 @@ SUBLABS: dict[str, SublabInfo] = {
     "biomarker-curation": SublabInfo(
         name="Biomarker Curation",
         description="Panel candidates with expression heatmaps",
-        agents=["statistical_genetics", "single_cell_atlas", "clinical_trialist"],
-        divisions=["Target Identification", "Clinical Intelligence"],
+        agents=["statistical_genetics", "single_cell_atlas", "clinical_trialist", "literature_synthesis"],
+        divisions=["Target Identification", "Clinical Intelligence", "Computational Biology"],
         examples=[
             "Identify circulating biomarkers for early pancreatic cancer detection",
             "Curate a pharmacodynamic biomarker panel for JAK inhibitor response",
@@ -153,3 +154,58 @@ async def list_tools() -> list[ToolInfo]:
 @router.get("/meta/integrations")
 async def list_integrations() -> list[IntegrationInfo]:
     return INTEGRATIONS
+
+
+# ---------------------------------------------------------------------------
+# Sublab execution
+# ---------------------------------------------------------------------------
+
+class RunSublabRequest(BaseModel):
+    query: str
+
+
+class RunSublabResponse(BaseModel):
+    query_id: str
+    executive_summary: str
+    key_findings_count: int
+    hitl_summary: str
+    heatmap_url: str | None = None
+    total_cost: float
+    total_duration_seconds: float
+
+
+# Map of slug → registry name for the sublab factory
+_SLUG_TO_NAME: dict[str, str] = {
+    slug: info.name for slug, info in SUBLABS.items()
+}
+
+
+@router.post("/{sublab_id}/run")
+async def run_sublab(sublab_id: str, body: RunSublabRequest) -> RunSublabResponse:
+    """Execute a sublab pipeline and return the final report summary."""
+    if sublab_id not in SUBLABS:
+        raise HTTPException(status_code=404, detail=f"Unknown sublab: {sublab_id}")
+
+    from src.factory import create_sublab, create_system
+
+    name = _SLUG_TO_NAME[sublab_id]
+    divisions = create_system()
+    sublab = create_sublab(name, divisions=divisions)
+
+    report = await sublab.run(body.query)
+
+    # Extract heatmap URL if present
+    heatmap_url = None
+    heatmap = report.evidence_synthesis.get("expression_heatmap")
+    if heatmap:
+        heatmap_url = heatmap.get("image_url")
+
+    return RunSublabResponse(
+        query_id=report.query_id,
+        executive_summary=report.executive_summary,
+        key_findings_count=len(report.key_findings),
+        hitl_summary=report.hitl_summary,
+        heatmap_url=heatmap_url,
+        total_cost=report.total_cost,
+        total_duration_seconds=report.total_duration_seconds,
+    )

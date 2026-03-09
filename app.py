@@ -539,15 +539,29 @@ def render_results_tab() -> None:
     st.divider()
 
     # --- Visual Context (#3, #4) --------------------------------------------
-    # TODO: Wire to report generator (#3) and BioRender MCP (#4)
     st.subheader("Visual Context")
+
+    # Check for expression heatmap from Biomarker Curation pipeline
+    heatmap_data = report.evidence_synthesis.get("expression_heatmap") if report.evidence_synthesis else None
+    if heatmap_data and heatmap_data.get("image_url"):
+        with st.expander("Expression Heatmap", expanded=True):
+            st.image(heatmap_data["image_url"], use_container_width=True)
+            genes = heatmap_data.get("genes", [])
+            samples = heatmap_data.get("samples", [])
+            st.caption(f"{len(genes)} genes × {len(samples)} samples")
+            if heatmap_data.get("summary"):
+                st.caption(heatmap_data["summary"])
+
     fig_cols = st.columns(3)
     figure_placeholders = [
         ("Pathway Diagram", "Signaling pathway for the target of interest"),
-        ("Expression Heatmap", "Tissue/cell-type expression profile"),
+        ("Expression Heatmap", "Tissue/cell-type expression profile") if not heatmap_data else None,
         ("Mechanism of Action", "Drug-target interaction illustration"),
     ]
-    for col, (title, caption) in zip(fig_cols, figure_placeholders):
+    for col, entry in zip(fig_cols, figure_placeholders):
+        if entry is None:
+            continue
+        title, caption = entry
         with col:
             with st.container(border=True, height=200):
                 st.markdown(f"**{title}**")
@@ -668,6 +682,11 @@ def render_results_tab() -> None:
         st.subheader("Limitations")
         for lim in report.limitations:
             st.markdown(f"- {lim}")
+
+    # HITL routing summary
+    if report.hitl_summary:
+        st.subheader("Expert Review Summary")
+        st.code(report.hitl_summary, language=None)
 
     st.divider()
 
