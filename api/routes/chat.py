@@ -562,6 +562,475 @@ async def _stream_mock(chat: Chat, msg_id: str):
 
 
 # ===========================================================================
+# Mock streaming — PARP + PD-L1 combination (BRCA1-mutant TNBC)
+# ===========================================================================
+
+
+def _mock_response_text_parp() -> str:
+    return (
+        "## PARP Inhibitor + Anti-PD-L1 Combination Assessment — BRCA1-Mutant TNBC\n\n"
+        "### Executive Summary\n\n"
+        "The combination of PARP inhibition (olaparib/talazoparib) with anti-PD-L1 checkpoint blockade "
+        "(atezolizumab) represents a **mechanistically rational** strategy for BRCA1-mutant triple-negative "
+        "breast cancer. Synthetic lethality via PARP trapping in HR-deficient tumor cells is well-validated "
+        "(Bryant & Farmer, 2005), and BRCA1-mutant TNBCs exhibit elevated PD-L1 expression (45–60%) and "
+        "higher tumor mutational burden, creating a favorable immunogenic context. However, the proposed "
+        "PD-L1/PARP-trapping bispecific antibody remains **highly speculative** — no validated format exists "
+        "for antibody-conjugated PARP-trapping moieties.\n\n"
+        "---\n\n"
+        "### Dynamic SubLab Execution\n\n"
+        "- **Mode**: Dynamic SubLab (cross-domain tool mixing)\n"
+        "- **Team**: 5 agents, 3 execution groups, 14 tools across 6 domains\n"
+        "- **Biosecurity**: Pre-screen PASSED (GREEN)\n"
+        "- **Review**: 3-pass adversarial — 8/9 findings approved, 1 routed to HITL\n"
+        "- **HITL**: Bispecific antibody feasibility reviewed — approved for in silico exploration only\n\n"
+        "---\n\n"
+        "### Key Findings\n\n"
+        "| # | Finding | Agent | Confidence |\n"
+        "|---|---------|-------|------------|\n"
+        "| 1 | BRCA1 loss-of-function confers synthetic lethality with PARP inhibition via HR-deficiency | synthetic_lethality_analyst | **HIGH** 94% |\n"
+        "| 2 | Olaparib/talazoparib trap PARP1 on DNA → replication fork collapse → cell death in BRCA1⁻/⁻ | structural_biology_lead_opt | **HIGH** 92% |\n"
+        "| 3 | BRCA1-mutant TNBC shows elevated PD-L1 (45–60%) and TMB (avg 8.2 mut/Mb) | immuno_oncology_analyst | **HIGH** 88% |\n"
+        "| 4 | MEDIOLA trial: olaparib + durvalumab showed 63% DCR in BRCA-mutant breast cancer | immuno_oncology_analyst | **HIGH** 85% |\n"
+        "| 5 | PARP inhibitors upregulate PD-L1 via cGAS-STING pathway activation | synthetic_lethality_analyst | **HIGH** 82% |\n"
+        "| 6 | Combination toxicity manageable: overlapping anemia (12%) and neutropenia (8%) | toxicology_safety_profiler | **HIGH** 79% |\n"
+        "| 7 | PARP1 catalytic domain structure (PDB: 7KK5) amenable to trapping-optimized derivatives | structural_biology_lead_opt | **MED** 71% |\n"
+        "| 8 | Talazoparib shows 100x stronger PARP trapping vs olaparib in biochemical assays | structural_biology_lead_opt | **MED** 68% |\n"
+        "| 9 | PD-L1/PARP-trapping bispecific antibody feasibility *(HITL-reviewed, in silico only)* | bispecific_antibody_engineer | **LOW** 32% |\n\n"
+        "---\n\n"
+        "### Synthetic Lethality & Combination Mechanism\n\n"
+        "```\n"
+        "BRCA1 Loss → HR Deficiency → Reliance on PARP-mediated BER\n"
+        "                              ↓\n"
+        "PARP Inhibitor (Trapping) → PARP1-DNA Complex → Replication Fork Collapse → DSBs → Tumor Cell Death\n"
+        "                              ↓\n"
+        "cGAS-STING Activation → Type I IFN → PD-L1 Upregulation + Neoantigen Presentation\n"
+        "                              ↓\n"
+        "Anti-PD-L1 (Atezolizumab) → T-cell Reactivation → Immune-Mediated Killing\n"
+        "```\n\n"
+        "### PARP1 Structure & Binding\n\n"
+        "3D structure rendered via PyMOL (PDB: 7KK5). Olaparib occupies the nicotinamide-binding subsite "
+        "of the PARP1 catalytic domain (residues 662–1014). Key trapping contacts: H862 (π-stacking), "
+        "Y907 (hydrogen bond), E988 (electrostatic). Druggable pocket volume: 847 Å³.\n\n"
+        "### Risk Assessment\n\n"
+        "- **Synthetic lethality**: Strong — landmark evidence since 2005, FDA-approved PARP inhibitors in BRCA+ cancers\n"
+        "- **Combination rationale**: Strong — PARP inhibition primes immune response via STING pathway\n"
+        "- **Safety**: Moderate — manageable overlapping hematologic toxicity, immune-related AEs\n"
+        "- **Bispecific antibody**: High risk — no precedent for PARP-trapping antibody conjugate format\n"
+        "- **CMC feasibility**: High risk — dual-mechanism payload stability, manufacturing scalability unknown\n\n"
+        "### Recommended Next Steps\n\n"
+        "1. Prioritize conventional combination (olaparib + atezolizumab) for near-term clinical development\n"
+        "2. Initiate in silico modeling of PD-L1/PARP-trapping bispecific format (Rosetta, AlphaFold-Multimer)\n"
+        "3. Profile PARP-trapping moiety stability when conjugated to antibody scaffold\n"
+        "4. Evaluate talazoparib as preferred PARP component (stronger trapping, lower dose requirement)\n"
+        "5. Design Phase Ib dose-escalation for combination in BRCA1-mutant TNBC (biomarker-selected)\n\n"
+        "### Integrations\n\n"
+        "- Findings posted to **#tnbc-combination-therapy** on Slack\n"
+        "- PARP1-olaparib binding structure rendered via **PyMOL**\n"
+        "- Bispecific antibody design notebook **EXP-2026-0892** created in **Benchling**\n\n"
+        "---\n\n"
+        "*Overall confidence: **MEDIUM-HIGH** (0.74) · Cost: $4.87 · Duration: 3m 48s · 5 agents · 6 domains · Dynamic SubLab*"
+    )
+
+
+async def _stream_mock_parp(chat: Chat, msg_id: str):
+    """Stream the PARP/PD-L1 bispecific dynamic SubLab demo."""
+    slack_channel = os.environ.get("LUMI_SLACK_CHANNEL", "")
+
+    all_traces: list[AgentTrace] = []
+    all_hitl: list[HitlEvent] = []
+    all_integrations: list[IntegrationEvent] = []
+
+    def _sse(event_type: str, data: dict) -> str:
+        data["message_id"] = msg_id
+        data["type"] = event_type
+        return f"data: {json.dumps(data, default=str)}\n\n"
+
+    # ── Phase 1: CSO Scoping ──
+
+    yield _sse("trace_start", {"trace": AgentTrace(
+        agent_id="cso_orchestrator", division="Orchestration", status="running",
+        message="Parsing combination therapy query across oncology, immunology, and structural biology...",
+    ).model_dump()})
+    await asyncio.sleep(2.5)
+
+    cso_done = AgentTrace(
+        agent_id="cso_orchestrator", division="Orchestration", status="complete",
+        message="Query parsed. PARP + anti-PD-L1 combination for BRCA1-mutant TNBC. Covers synthetic lethality, structural optimization, safety, and bispecific antibody developability.",
+        tools_called=[
+            ToolCall(tool_name="parse_research_query", tool_input={"query": "PARP inhibitor anti-PD-L1 BRCA1 TNBC bispecific"}, result="Target: PARP1 + PD-L1 | Indication: BRCA1-mut TNBC | Task: combination assessment + bispecific feasibility", duration_ms=620),
+            ToolCall(tool_name="select_sublab_mode", tool_input={"domains": ["oncology", "immunology", "structural_biology", "toxicology", "antibody_engineering", "clinical"]}, result="Dynamic SubLab — 6 domains require cross-domain tool mixing", duration_ms=310),
+        ],
+        confidence_score=0.97, confidence_level="HIGH", duration_ms=2180,
+    )
+    yield _sse("trace_complete", {"trace": cso_done.model_dump()})
+    all_traces.append(cso_done)
+    await asyncio.sleep(1.0)
+
+    # ── Phase 2: Biosecurity Pre-screen ──
+
+    yield _sse("trace_start", {"trace": AgentTrace(
+        agent_id="biosecurity_officer", division="Biosecurity", status="running",
+        message="Screening PARP inhibitor + checkpoint blockade for dual-use risk...",
+    ).model_dump()})
+    await asyncio.sleep(1.0)
+
+    bio_tool = ToolCall(
+        tool_name="screen_biosecurity",
+        tool_input={"query": "PARP inhibitor olaparib anti-PD-L1 atezolizumab BRCA1 TNBC bispecific antibody"},
+        result="5/5 screens passed — GREEN. FDA-approved drug classes (PARP inhibitor, anti-PD-L1). Bispecific concept is therapeutic, not dual-use.",
+        duration_ms=820,
+    )
+    yield _sse("tool_call", {"agent_id": "biosecurity_officer", "tool": bio_tool.model_dump()})
+    await asyncio.sleep(1.0)
+
+    bio_done = AgentTrace(
+        agent_id="biosecurity_officer", division="Biosecurity", status="complete",
+        message="Pre-screen PASSED. Category: GREEN. Both drug classes FDA-approved, bispecific antibody is therapeutic.",
+        tools_called=[bio_tool],
+        confidence_score=1.0, confidence_level="HIGH", duration_ms=1040,
+    )
+    yield _sse("trace_complete", {"trace": bio_done.model_dump()})
+    all_traces.append(bio_done)
+    await asyncio.sleep(0.8)
+
+    # ── Phase 3: SubLab Planning ──
+
+    yield _sse("trace_start", {"trace": AgentTrace(
+        agent_id="sublab_planner", division="Orchestration", status="running",
+        message="Composing cross-domain team for combination therapy + bispecific assessment...",
+    ).model_dump()})
+    await asyncio.sleep(2.5)
+
+    plan_done = AgentTrace(
+        agent_id="sublab_planner", division="Orchestration", status="complete",
+        message=(
+            "Team composed: 5 agents in 3 execution groups.\n"
+            "Group 1 (parallel): Synthetic Lethality Analyst, Immuno-Oncology Analyst\n"
+            "Group 2 (parallel): Structural Biology & Lead Opt, Toxicology & Safety Profiler\n"
+            "Group 3 (sequential): Bispecific Antibody Engineer"
+        ),
+        tools_called=[
+            ToolCall(
+                tool_name="compose_team",
+                tool_input={"domains": ["oncology", "immunology", "structural_biology", "toxicology", "antibody_engineering", "clinical"], "tools": 119},
+                result="5 agents selected, 14 tools assigned across 6 domains",
+                duration_ms=1480,
+            ),
+        ],
+        confidence_score=0.97, confidence_level="HIGH", duration_ms=2640,
+    )
+    yield _sse("trace_complete", {"trace": plan_done.model_dump()})
+    all_traces.append(plan_done)
+    await asyncio.sleep(1.0)
+
+    # ── Phase 4: Group 1 — Parallel (Synthetic Lethality + Immuno-Oncology) ──
+
+    yield _sse("trace_start", {"trace": AgentTrace(
+        agent_id="synthetic_lethality_analyst", division="Dynamic SubLab · Group 1", status="running",
+        message="Evaluating BRCA1 synthetic lethality with PARP inhibition...",
+    ).model_dump()})
+    yield _sse("trace_start", {"trace": AgentTrace(
+        agent_id="immuno_oncology_analyst", division="Dynamic SubLab · Group 1", status="running",
+        message="Analyzing PD-L1 checkpoint blockade in TNBC microenvironment...",
+    ).model_dump()})
+    await asyncio.sleep(1.5)
+
+    synth_tools = [
+        ToolCall(tool_name="get_gene_info", tool_input={"gene": "BRCA1"}, result="BRCA1: 17q21.31, 1863 aa, tumor suppressor. Functions: HR repair, DNA damage checkpoint, transcription regulation. Loss → HR deficiency → PARP synthetic lethality.", duration_ms=1120),
+        ToolCall(tool_name="get_pathways_for_gene", tool_input={"gene": "BRCA1"}, result="KEGG: hsa03440 (HR repair), hsa04115 (p53 signaling), hsa03460 (Fanconi anemia). BRCA1-PALB2-BRCA2-RAD51 axis essential for HR.", duration_ms=1340),
+        ToolCall(tool_name="search_pubmed", tool_input={"query": "BRCA1 PARP synthetic lethality mechanism"}, result="2,340 results. Landmark: Bryant 2005 (Nature), Farmer 2005 (Nature). PARP trapping > catalytic inhibition for cell killing. cGAS-STING upregulates PD-L1 post-PARP inhibition.", duration_ms=1480),
+        ToolCall(tool_name="query_gwas_associations", tool_input={"gene": "BRCA1"}, result="5,592 pathogenic variants (ClinVar). BRCA1 185delAG and 5382insC most common. Lifetime breast cancer risk: 57-87%. TNBC enrichment: 70% of BRCA1-mutant breast cancers are TN.", duration_ms=1260),
+    ]
+    io_tools = [
+        ToolCall(tool_name="get_drug_info", tool_input={"drug": "olaparib"}, result="PARP1/2 inhibitor. MW: 434.5 Da. FDA-approved: BRCA+ breast, ovarian, pancreatic, prostate. IC₅₀: 5 nM (PARP1). Trapping potency: moderate (vs talazoparib 100x stronger).", duration_ms=1180),
+        ToolCall(tool_name="get_drug_info", tool_input={"drug": "atezolizumab"}, result="Anti-PD-L1 mAb (IgG1, Fc-engineered). FDA-approved: TNBC (IMpassion130, with nab-paclitaxel), NSCLC, urothelial. Binds PD-L1 on tumor cells and tumor-infiltrating immune cells.", duration_ms=1090),
+        ToolCall(tool_name="search_trials", tool_input={"query": "TNBC PARP PD-L1 combination breast cancer"}, result="12 trials: MEDIOLA (olaparib+durvalumab, Phase II), KEYLYNK-009 (olaparib+pembrolizumab, Phase III), TOPACIO (niraparib+pembrolizumab, Phase II), JAVELIN PARP Medley (talazoparib+avelumab, Phase Ib/II).", duration_ms=1420),
+        ToolCall(tool_name="search_pubmed", tool_input={"query": "PD-L1 expression BRCA1 mutant triple negative breast cancer TMB"}, result="482 results. Key: Nolan 2017 (BRCA1-mut TNBC: PD-L1+ 45-60%), Samstein 2019 (TMB correlates with ICB response), Jiao 2017 (PARP inhibition activates cGAS-STING → IFN → PD-L1 upregulation).", duration_ms=1380),
+    ]
+
+    for i in range(4):
+        yield _sse("tool_call", {"agent_id": "synthetic_lethality_analyst", "tool": synth_tools[i].model_dump()})
+        await asyncio.sleep(0.9)
+        yield _sse("tool_call", {"agent_id": "immuno_oncology_analyst", "tool": io_tools[i].model_dump()})
+        await asyncio.sleep(0.9)
+
+    await asyncio.sleep(0.8)
+
+    synth_done = AgentTrace(
+        agent_id="synthetic_lethality_analyst", division="Dynamic SubLab · Group 1", status="complete",
+        message="BRCA1 loss confers synthetic lethality with PARP inhibition via HR deficiency. cGAS-STING pathway activation post-PARP inhibition upregulates PD-L1, creating immune synergy rationale.",
+        tools_called=synth_tools,
+        confidence_score=0.91, confidence_level="HIGH", duration_ms=9840,
+    )
+    yield _sse("trace_complete", {"trace": synth_done.model_dump()})
+    all_traces.append(synth_done)
+    await asyncio.sleep(0.6)
+
+    io_done = AgentTrace(
+        agent_id="immuno_oncology_analyst", division="Dynamic SubLab · Group 1", status="complete",
+        message="BRCA1-mutant TNBC shows elevated PD-L1 (45-60%) and TMB (8.2 mut/Mb). MEDIOLA trial: olaparib + durvalumab achieved 63% DCR. 12 active combination trials across PARP + checkpoint inhibitor space.",
+        tools_called=io_tools,
+        confidence_score=0.86, confidence_level="HIGH", duration_ms=10270,
+    )
+    yield _sse("trace_complete", {"trace": io_done.model_dump()})
+    all_traces.append(io_done)
+    await asyncio.sleep(1.0)
+
+    # ── Phase 5: Group 2 — Parallel (Structural + Safety) ──
+
+    yield _sse("trace_start", {"trace": AgentTrace(
+        agent_id="structural_biology_lead_opt", division="Dynamic SubLab · Group 2", status="running",
+        message="Resolving PARP1 crystal structure and optimizing lead compounds...",
+    ).model_dump()})
+    yield _sse("trace_start", {"trace": AgentTrace(
+        agent_id="toxicology_safety_profiler", division="Dynamic SubLab · Group 2", status="running",
+        message="Profiling combination toxicity for olaparib + atezolizumab...",
+    ).model_dump()})
+    await asyncio.sleep(1.5)
+
+    struct_tools = [
+        ToolCall(tool_name="get_protein_structure", tool_input={"protein": "PARP1", "pdb_id": "7KK5"}, result="PDB 7KK5: PARP1 catalytic domain (res 662-1014) + olaparib co-crystal. Resolution: 2.1 Å. NAD+ binding cleft with allosteric regulatory domain. Trapping interface: H862, Y907, E988.", duration_ms=1640),
+        ToolCall(tool_name="pymol_render_structure", tool_input={"pdb_id": "7KK5", "style": "cartoon+surface", "highlight_residues": ["H862", "E988", "Y907"], "color_scheme": "domain", "label": "PARP1 catalytic domain with olaparib binding site"}, result="3D render generated: PARP1 catalytic domain (residues 662-1014) with NAD+ binding pocket highlighted. Olaparib occupies the nicotinamide-binding subsite. Key trapping contacts: H862 (π-stacking), Y907 (H-bond), E988 (electrostatic). Surface: druggable pocket volume 847 Å³.", duration_ms=3840),
+        ToolCall(tool_name="dock_compound", tool_input={"receptor": "PARP1_7KK5", "ligand": "talazoparib", "method": "induced_fit"}, result="Talazoparib docking: ΔG = -12.4 kcal/mol (vs olaparib -9.8). Enhanced π-stacking at H862, additional H-bond at S904. Explains 100x trapping potency difference. Retention time on DNA-PARP complex: 48 min vs 8 min (olaparib).", duration_ms=2890),
+        ToolCall(tool_name="generate_moa_diagram", tool_input={"drug": "olaparib + atezolizumab", "target": "PARP1 + PD-L1", "indication": "BRCA1-mutant TNBC"}, result="MOA diagram: dual-arm mechanism. Left: PARP trapping → SSB → fork collapse → DSBs → tumor death. Right: cGAS-STING → IFN → PD-L1↑ → anti-PD-L1 → T-cell reactivation. Convergence at tumor cell elimination.", duration_ms=2140),
+    ]
+    safety_tools = [
+        ToolCall(tool_name="get_side_effects", tool_input={"drug": "olaparib"}, result="Common: nausea (58%), fatigue (37%), anemia (25%), vomiting (32%). Serious: MDS/AML (1.2%), pneumonitis (0.8%). Dose-limiting: anemia. Grade ≥3 anemia: 16%.", duration_ms=1080),
+        ToolCall(tool_name="get_side_effects", tool_input={"drug": "atezolizumab"}, result="Common: fatigue (24%), nausea (17%), decreased appetite (15%). Immune-related: hepatitis (3%), pneumonitis (2.5%), colitis (1.6%), thyroiditis (5.6%). Grade ≥3 irAE: 8%.", duration_ms=960),
+        ToolCall(tool_name="search_pubmed", tool_input={"query": "PARP inhibitor anti-PD-L1 combination toxicity hematologic"}, result="89 results. MEDIOLA: Grade ≥3 anemia 12%, neutropenia 8%. TOPACIO: Grade ≥3 anemia 18%. Overlapping hematologic toxicity is dose-limiting. No unexpected synergistic toxicities.", duration_ms=1440),
+        ToolCall(tool_name="predict_drug_interactions", tool_input={"drug_a": "olaparib", "drug_b": "atezolizumab"}, result="No direct PK interaction (different metabolism: CYP3A4 vs proteolytic). Pharmacodynamic overlap: additive myelosuppression. Risk: combined anemia (predicted Grade ≥3: 12-18%). Manageable with dose modification.", duration_ms=1280),
+    ]
+
+    for i in range(4):
+        yield _sse("tool_call", {"agent_id": "structural_biology_lead_opt", "tool": struct_tools[i].model_dump()})
+        await asyncio.sleep(1.1)
+        yield _sse("tool_call", {"agent_id": "toxicology_safety_profiler", "tool": safety_tools[i].model_dump()})
+        await asyncio.sleep(1.1)
+
+    await asyncio.sleep(0.8)
+
+    struct_done = AgentTrace(
+        agent_id="structural_biology_lead_opt", division="Dynamic SubLab · Group 2", status="complete",
+        message="PARP1 structure resolved (PDB 7KK5, 2.1 Å). Talazoparib shows 100x stronger trapping via enhanced π-stacking at H862. 3D structure rendered via PyMOL. MOA diagram generated for dual-arm mechanism.",
+        tools_called=struct_tools,
+        confidence_score=0.88, confidence_level="HIGH", duration_ms=12640,
+    )
+    yield _sse("trace_complete", {"trace": struct_done.model_dump()})
+    all_traces.append(struct_done)
+    await asyncio.sleep(0.6)
+
+    safety_done = AgentTrace(
+        agent_id="toxicology_safety_profiler", division="Dynamic SubLab · Group 2", status="complete",
+        message="Combination toxicity manageable. Overlapping hematologic AEs: Grade ≥3 anemia 12-18%, neutropenia 8%. No unexpected synergistic toxicities. No direct PK interaction.",
+        tools_called=safety_tools,
+        confidence_score=0.84, confidence_level="HIGH", duration_ms=11380,
+    )
+    yield _sse("trace_complete", {"trace": safety_done.model_dump()})
+    all_traces.append(safety_done)
+    await asyncio.sleep(1.0)
+
+    # ── Phase 6: Group 3 — Bispecific Antibody Engineer ──
+
+    yield _sse("trace_start", {"trace": AgentTrace(
+        agent_id="bispecific_antibody_engineer", division="Dynamic SubLab · Group 3", status="running",
+        message="Assessing PD-L1/PARP-trapping bispecific antibody developability...",
+    ).model_dump()})
+    await asyncio.sleep(1.5)
+
+    bispec_tools = [
+        ToolCall(tool_name="antibody_developability", tool_input={"format": "bispecific_IgG", "arm_a": "anti-PD-L1 (atezolizumab CDR)", "arm_b": "talazoparib-PEG8 conjugate"}, result="Developability flags: aggregation propensity MODERATE (SAP score 0.42), viscosity at 150 mg/mL: 18 cP (acceptable). Conjugation site heterogeneity: 3 possible positions. Accelerated stability (40°C/4wk): 15% aggregation increase. Tm: 68°C (arm A), 52°C (arm B — conjugate lowers thermal stability).", duration_ms=2480),
+        ToolCall(tool_name="predict_immunogenicity", tool_input={"sequence": "atezolizumab_CDR_talazoparib_conjugate", "method": "T-cell_epitope_prediction"}, result="Immunogenicity risk: LOW for anti-PD-L1 arm (humanized). MODERATE for linker-drug region — 2 predicted MHC-II binding peptides in PEG8-talazoparib junction. Recommendation: optimize linker to remove T-cell epitopes.", duration_ms=1860),
+        ToolCall(tool_name="esm2_score_mutations", tool_input={"protein": "anti-PD-L1_arm", "mutations": ["S239D", "I332E", "L235A"], "property": "effector_function"}, result="S239D/I332E: enhanced ADCC (2.1x FcγRIIIa binding). L235A: silenced effector. For bispecific: recommend L235A/P329G (silent Fc) — tumor killing via PARP trapping + T-cell activation, not ADCC.", duration_ms=2240),
+        ToolCall(tool_name="generate_pathway_diagram", tool_input={"title": "PD-L1/PARP-Trapping Bispecific Architecture", "nodes": ["Anti-PD-L1 Fab", "Silent Fc (L235A/P329G)", "PEG8 Linker", "Talazoparib Warhead", "PD-L1 (Tumor)", "PARP1-DNA Complex", "T-cell Activation", "Synthetic Lethality"]}, result="Architecture diagram: bispecific IgG with asymmetric arms. Arm A: anti-PD-L1 Fab → blocks checkpoint. Arm B: Fab-PEG8-talazoparib → traps PARP1. Silent Fc prevents off-target ADCC.", duration_ms=1960),
+    ]
+
+    for tool in bispec_tools:
+        yield _sse("tool_call", {"agent_id": "bispecific_antibody_engineer", "tool": tool.model_dump()})
+        await asyncio.sleep(1.4)
+
+    await asyncio.sleep(0.8)
+
+    bispec_done = AgentTrace(
+        agent_id="bispecific_antibody_engineer", division="Dynamic SubLab · Group 3", status="complete",
+        message="Bispecific feasibility assessed. PEG₈-linked talazoparib warhead shows 3.2x IC₅₀ shift vs free drug. 15% aggregation at 40°C/4wk. Silent Fc (L235A/P329G) recommended. Concept is exploratory — no validated format exists.",
+        tools_called=bispec_tools,
+        confidence_score=0.32, confidence_level="LOW", duration_ms=13680,
+    )
+    yield _sse("trace_complete", {"trace": bispec_done.model_dump()})
+    all_traces.append(bispec_done)
+    await asyncio.sleep(1.0)
+
+    # ── Phase 7: Evidence Preparation (diagram + writeup for expert review) ──
+
+    yield _sse("trace_start", {"trace": AgentTrace(
+        agent_id="evidence_compiler", division="Orchestration", status="running",
+        message="Preparing contextual evidence for expert review...",
+    ).model_dump()})
+    await asyncio.sleep(1.0)
+
+    evidence_tools = [
+        ToolCall(
+            tool_name="generate_mechanism_diagram",
+            tool_input={"title": "PD-L1/PARP-Trapping Bispecific MOA in BRCA1-mut TNBC", "nodes": ["Bispecific Ab", "PD-L1", "PARP1", "DNA DSB", "Synthetic Lethality", "T-cell Activation", "Tumor Cell Death"], "pathways": ["immune checkpoint blockade", "PARP trapping", "HRD synthetic lethality"]},
+            result="Mechanism diagram: 7 nodes, 2 convergent pathways → tumor cell death. Left arm: anti-PD-L1 → T-cell reactivation → immune-mediated killing. Right arm: PARP-trapping → persistent SSBs → replication fork collapse → synthetic lethality in BRCA1⁻/⁻ cells.",
+            duration_ms=2890,
+        ),
+        ToolCall(
+            tool_name="generate_executive_brief",
+            tool_input={"topic": "PD-L1/PARP bispecific antibody feasibility", "evidence_sources": 9, "confidence_range": "0.32-0.94"},
+            result="Executive brief drafted: 1,200 words covering rationale, structural feasibility, CMC challenges (dual-payload stability, PARP-trapping moiety conjugation), competitive landscape (3 bispecific programs in preclinical), and risk-benefit assessment. Key concern: no validated PARP-trapping antibody conjugate format exists.",
+            duration_ms=2140,
+        ),
+    ]
+    for tool in evidence_tools:
+        yield _sse("tool_call", {"agent_id": "evidence_compiler", "tool": tool.model_dump()})
+        await asyncio.sleep(1.5)
+
+    evidence_done = AgentTrace(
+        agent_id="evidence_compiler", division="Orchestration", status="complete",
+        message="Evidence package prepared: mechanism diagram (dual-arm convergent MOA) and executive brief (1,200 words) for expert review of bispecific antibody feasibility.",
+        tools_called=evidence_tools,
+        confidence_score=0.95, confidence_level="HIGH", duration_ms=6240,
+    )
+    yield _sse("trace_complete", {"trace": evidence_done.model_dump()})
+    all_traces.append(evidence_done)
+    await asyncio.sleep(1.0)
+
+    # ── Phase 8: Adversarial Review Panel ──
+
+    yield _sse("trace_start", {"trace": AgentTrace(
+        agent_id="review_panel", division="Orchestration", status="running",
+        message="Running 3-pass adversarial review (methodology → evidence → synthesis)...",
+    ).model_dump()})
+    await asyncio.sleep(1.5)
+
+    review_tool = ToolCall(
+        tool_name="confidence_calibration",
+        tool_input={"claims": 9, "method": "3-pass adversarial"},
+        result="9 claims scored. Auto-pass (≥0.70): BRCA1 synthetic lethality (0.94), PARP trapping mechanism (0.92), PD-L1 expression (0.88), MEDIOLA DCR (0.85), cGAS-STING (0.82), combination safety (0.79), PARP1 structure (0.71). Near-pass: talazoparib trapping (0.68). Soft-flag: bispecific feasibility (0.32). Mean: 0.74.",
+        duration_ms=980,
+    )
+    yield _sse("tool_call", {"agent_id": "review_panel", "tool": review_tool.model_dump()})
+    await asyncio.sleep(1.0)
+
+    review_done = AgentTrace(
+        agent_id="review_panel", division="Orchestration", status="complete",
+        message="3-pass adversarial review complete. 8/9 findings APPROVED (≥0.50). 1 flagged SOFT (0.32) — bispecific antibody feasibility routed to HITL.",
+        tools_called=[review_tool],
+        confidence_score=0.93, confidence_level="HIGH", duration_ms=2480,
+    )
+    yield _sse("trace_complete", {"trace": review_done.model_dump()})
+    all_traces.append(review_done)
+    await asyncio.sleep(1.0)
+
+    # ── Phase 9: HITL — Flag bispecific antibody feasibility ──
+
+    finding_id = "review_parp_bispec_001"
+
+    bispec_hitl = {
+        "finding": "A PD-L1/PARP-trapping bispecific antibody could achieve synergistic tumor cell killing by simultaneously blocking immune checkpoint and inducing synthetic lethality in BRCA1-deficient TNBC.",
+        "agent_id": "bispecific_antibody_engineer",
+        "confidence_score": 0.32,
+        "reason": "Below 0.50 threshold. No validated PARP-trapping antibody conjugate format exists. In silico modeling only — 15% aggregation at 40°C/4wk, 3.2x IC₅₀ shift vs free talazoparib.",
+        "finding_id": finding_id,
+        "status": "pending",
+    }
+    yield _sse("hitl_flag", {"hitl": bispec_hitl})
+
+    # Post to Slack if configured
+    thread_ts = None
+    if slack_channel:
+        thread_ts = await _try_slack_post(
+            channel=slack_channel,
+            text=(
+                "Lumi HITL Review | Confidence: 32%\n"
+                "Finding: PD-L1/PARP-trapping bispecific antibody feasibility for BRCA1-mutant TNBC.\n"
+                "Agent: bispecific_antibody_engineer"
+            ),
+            username="Lumi Agent",
+            icon_emoji=":microscope:",
+        )
+
+    expert_messages = [
+        ("Lumi Agent", "AI Scientist", "agent",
+         "I've flagged a finding on PD-L1/PARP-trapping bispecific antibody feasibility for review. "
+         "Confidence is 32%. The concept has mechanistic rationale but no experimental validation."),
+        ("Dr. James Rodriguez", "Antibody Engineering Lead", "expert",
+         "What structural data supports a bispecific format here? PARP trapping requires the inhibitor "
+         "to physically trap PARP1 on DNA — how would you achieve that from an antibody-conjugated payload?"),
+        ("Lumi Agent", "AI Scientist", "agent",
+         "Rosetta modeling suggests a PEG₈-linked talazoparib warhead on the Fab arm could maintain "
+         "PARP-trapping activity (predicted IC₅₀ shift: 3.2x vs free talazoparib). DMS analysis shows "
+         "4/12 linker configurations maintain >50% trapping efficiency."),
+        ("Dr. James Rodriguez", "Antibody Engineering Lead", "expert",
+         "The 3x IC₅₀ shift is concerning but not disqualifying for proof-of-concept. I'll approve this "
+         "for in silico exploration only — do NOT include as a clinical recommendation."),
+    ]
+    if slack_channel and thread_ts:
+        for name, title, role, text in expert_messages:
+            await _try_slack_reply(
+                channel=slack_channel,
+                thread_ts=thread_ts,
+                text=f"*{name}* ({title})\n{text}",
+                username=name,
+                icon_emoji=":microscope:" if role == "agent" else ":male-scientist:",
+            )
+
+    await asyncio.sleep(12.0)
+
+    bispec_resolved = {
+        **bispec_hitl,
+        "status": "approved",
+        "reason": "Dr. James Rodriguez: Approved for in silico exploration only. Not a clinical recommendation. CMC challenges make this 3-5 years from IND-enabling. Focus near-term on conventional olaparib + atezolizumab combination.",
+    }
+    yield _sse("hitl_resolved", {"hitl": bispec_resolved})
+    all_hitl.append(HitlEvent(**bispec_resolved))
+    await asyncio.sleep(1.2)
+
+    # ── Phase 10: Integrations ──
+
+    slack_detail = "9 findings, 1 HITL-reviewed. 5 agents across 6 domains. Confidence: 0.74."
+    if slack_channel:
+        await _try_slack_post(
+            channel=slack_channel,
+            text=f"Lumi Pipeline Complete | PARP + PD-L1 Combination — BRCA1-mutant TNBC\n{slack_detail}",
+            username="Lumi",
+            icon_emoji=":dna:",
+        )
+
+    integrations = [
+        IntegrationEvent(integration="Slack", action="Posted findings summary to #tnbc-combination-therapy", status="complete", detail=slack_detail),
+        IntegrationEvent(integration="PyMOL", action="Rendered PARP1-olaparib co-crystal structure (PDB: 7KK5)", status="complete", detail="Cartoon+surface view highlighting trapping residues H862, Y907, E988. Pocket volume: 847 Å³."),
+        IntegrationEvent(integration="BioRender", action="Generated dual-arm MOA diagram for PARP+PD-L1 combination", status="complete", detail="Convergent mechanism: PARP trapping → synthetic lethality + cGAS-STING → anti-PD-L1 → immune killing."),
+        IntegrationEvent(integration="Benchling", action="Created notebook entry EXP-2026-0892", status="complete", detail="Bispecific antibody design dossier linked to TNBC-CombinationTherapy project."),
+    ]
+    for integ in integrations:
+        all_integrations.append(integ)
+        yield _sse("integration", {"call": integ.model_dump()})
+        await asyncio.sleep(1.2)
+
+    # ── Phase 11: Final synthesis ──
+
+    text = _mock_response_text_parp()
+    chunks = [text[i:i + 80] for i in range(0, len(text), 80)]
+    accumulated = ""
+    for chunk in chunks:
+        accumulated += chunk
+        yield _sse("text_delta", {"delta": chunk})
+        await asyncio.sleep(0.05)
+
+    assistant_msg = Message(
+        id=msg_id, role=Role.ASSISTANT, content=accumulated,
+        agent_traces=all_traces, hitl_events=all_hitl, integration_events=all_integrations,
+    )
+    chat.messages.append(assistant_msg)
+    chat.updated_at = datetime.now(timezone.utc)
+
+    yield _sse("done", {})
+
+
+# ===========================================================================
 # Routes
 # ===========================================================================
 
@@ -586,6 +1055,11 @@ _MOCK_CLARIFY: dict[str, list[ClarifyQuestion]] = {
         ClarifyQuestion(id="focus", question="Should the analysis prioritize PK optimization, selectivity, or resistance mechanism coverage?", placeholder="e.g., PK + resistance mechanisms"),
         ClarifyQuestion(id="modality", question="Small molecule covalent inhibitors only, or include PROTACs and combination strategies?", placeholder="e.g., Covalent inhibitors + combo strategies"),
     ],
+    "parp": [
+        ClarifyQuestion(id="brca_status", question="Is the target population BRCA1-specific, or should BRCA2 and HRD-positive tumors also be included?", placeholder="e.g., BRCA1/2 germline mutations and HRD-positive"),
+        ClarifyQuestion(id="parp_agent", question="Which PARP inhibitor(s) should be evaluated — olaparib, talazoparib, or the class broadly?", placeholder="e.g., Focus on talazoparib (strongest PARP trapping)"),
+        ClarifyQuestion(id="bispecific_priority", question="For the bispecific antibody, should we prioritize PARP-trapping potency or PD-L1 binding affinity?", placeholder="e.g., Balance both — dual mechanism is the key differentiator"),
+    ],
     "default": [
         ClarifyQuestion(id="scope", question="What is the primary goal — target validation, drug design, safety assessment, or a full pipeline review?", placeholder="e.g., Full pipeline from target to candidate"),
         ClarifyQuestion(id="indication", question="Is there a specific disease indication or therapeutic area to focus on?", placeholder="e.g., Oncology, rare disease, neurodegeneration"),
@@ -599,6 +1073,8 @@ def _get_mock_questions(query: str) -> list[ClarifyQuestion]:
     q = query.lower()
     if "glp1r" in q or "glp-1" in q or "semaglutide" in q or "parkinson" in q:
         return _MOCK_CLARIFY["glp1r"]
+    elif "parp" in q or "brca" in q or "triple-negative" in q or "tnbc" in q or "bispecific" in q:
+        return _MOCK_CLARIFY["parp"]
     elif "pcsk9" in q or "cardiovascular" in q or "cholesterol" in q:
         return _MOCK_CLARIFY["pcsk9"]
     elif "kras" in q or "g12c" in q:
@@ -785,4 +1261,10 @@ async def send_message(chat_id: str, req: SendMessageRequest) -> StreamingRespon
     msg_id = str(uuid.uuid4())[:8]
     if req.mode == "live":
         return StreamingResponse(_stream_live(chat, msg_id, req.content), media_type="text/event-stream")
-    return StreamingResponse(_stream_mock(chat, msg_id), media_type="text/event-stream")
+    # Select mock based on query content
+    q = req.content.lower()
+    if any(kw in q for kw in ("parp", "brca", "triple-negative", "tnbc", "bispecific", "pd-l1")):
+        mock_gen = _stream_mock_parp(chat, msg_id)
+    else:
+        mock_gen = _stream_mock(chat, msg_id)
+    return StreamingResponse(mock_gen, media_type="text/event-stream")
