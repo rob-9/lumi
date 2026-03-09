@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import type { Chat, SublabInfo } from "@/lib/types";
-import { Send, ChevronRight, Settings, User } from "lucide-react";
+import { Send, ChevronRight, User } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import clsx from "clsx";
 
 export default function Landing() {
@@ -82,10 +83,7 @@ export default function Landing() {
 
         {/* User & Settings */}
         <div className="shrink-0 border-t border-[var(--border)] p-3 space-y-0.5">
-          <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-[var(--text-muted)] transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text)]">
-            <Settings size={14} className="opacity-50" />
-            Settings
-          </button>
+          <ThemeToggle />
           <div className="flex items-center gap-2.5 rounded-lg px-3 py-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-white">
               <User size={12} />

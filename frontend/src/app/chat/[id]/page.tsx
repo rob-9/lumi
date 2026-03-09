@@ -15,7 +15,8 @@ import { PlanPanel } from "@/components/panels/plan-panel";
 import { ToolsPanel } from "@/components/panels/tools-panel";
 import { ReviewPanel } from "@/components/panels/review-panel";
 import type { ReviewData } from "@/components/panels/review-panel";
-import { Send, PanelRightOpen, PanelRightClose, FlaskConical, Settings, User, ChevronRight } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Send, PanelRightOpen, PanelRightClose, FlaskConical, User, ChevronRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import clsx from "clsx";
@@ -246,10 +247,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         <ChatList chats={chats} activeChatId={chatId} />
         {/* User & Settings */}
         <div className="shrink-0 border-t border-[var(--border)] p-3 space-y-0.5">
-          <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-[var(--text-muted)] transition-all hover:bg-[var(--bg-hover)]">
-            <Settings size={14} className="opacity-50" />
-            Settings
-          </button>
+          <ThemeToggle />
           <div className="flex items-center gap-2.5 rounded-lg px-3 py-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-white">
               <User size={12} />

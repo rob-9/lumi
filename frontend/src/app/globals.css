@@ -1,6 +1,36 @@
 @import "tailwindcss";
 
+/* ── Dark theme (default) ── */
 :root {
+  --bg: #0e1015;
+  --bg-card: #16181e;
+  --bg-hover: #1e2028;
+  --bg-input: #1a1c24;
+  --border: #282a34;
+  --border-hover: #3a3d4a;
+  --border-focus: #5a9b8a;
+  --text: #e2e4e9;
+  --text-secondary: #a0a4b0;
+  --text-muted: #6b6f7e;
+  --accent: #5a9b8a;
+  --accent-light: #162a24;
+  --accent-dark: #7ec4ae;
+  --green: #22c55e;
+  --green-bg: #0c2618;
+  --orange: #f59e0b;
+  --orange-bg: #271d08;
+  --red: #ef4444;
+  --red-bg: #260e0e;
+  --sidebar-bg: #0b0d12;
+  --sidebar-text: #c8d4e2;
+  --sidebar-text-muted: #6b7f99;
+  --sidebar-hover: #161a22;
+  --sidebar-active: #1c2230;
+  color-scheme: dark;
+}
+
+/* ── Light theme ── */
+[data-theme="light"] {
   --bg: #faf8f5;
   --bg-card: #ffffff;
   --bg-hover: #f0ece6;
@@ -25,6 +55,7 @@
   --sidebar-text-muted: #6b7f99;
   --sidebar-hover: #243044;
   --sidebar-active: #2a3a52;
+  color-scheme: light;
 }
 
 body {
@@ -227,6 +258,9 @@ body {
 }
 .hover-lift:hover {
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+[data-theme="light"] .hover-lift:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
