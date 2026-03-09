@@ -202,13 +202,13 @@ export default function Landing() {
                 <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
                   {selectedSublab === "dynamic-live"
                     ? "Real pipeline execution — agents call LLMs and external APIs"
-                    : "Hardcoded demo — simulated agent traces with realistic timing"}
+                    : "Prerecorded agent flow — replays tool calls, HITL review, and synthesis"}
                 </p>
               </div>
               <div className="py-1">
                 {[
+                  "Evaluate PARP inhibitor + anti-PD-L1 combination therapy for BRCA1-mutant triple-negative breast cancer, covering synthetic lethality evidence, structural lead optimization, safety profiling, and developability of a PD-L1/PARP-trapping bispecific antibody.",
                   "Assess whether repurposing GLP-1 receptor agonists (e.g., semaglutide) could slow neurodegeneration in early-stage Parkinson's disease. Map the GLP-1R neuroprotective signaling pathway and evaluate the available clinical and genetic evidence.",
-                  "Evaluate PCSK9 as a cardiovascular target using multi-omic evidence",
                   "Design a selective KRAS G12C inhibitor with optimized PK properties",
                 ].map((example, i) => (
                   <button
@@ -217,7 +217,7 @@ export default function Landing() {
                     className="w-full px-4 py-2.5 text-left text-sm text-[var(--text-secondary)] transition-all hover:bg-[var(--accent-light)] hover:text-[var(--accent-dark)] hover:pl-5 animate-fade-in"
                     style={{ animationDelay: `${i * 50}ms` }}
                   >
-                    {example.length > 100 ? example.slice(0, 100) + "..." : example}
+                    {example}
                   </button>
                 ))}
               </div>
