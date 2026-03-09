@@ -17,6 +17,7 @@ from src.factory import (
     create_system,
     SUBLAB_REGISTRY,
 )
+from src.sublabs.assay_troubleshooting import _classify_query
 from src.utils.types import Phase
 
 
@@ -186,6 +187,119 @@ class TestExecutionPlan:
         for p in plan.phases:
             for dep in p.dependencies:
                 assert dep in phase_ids, f"Phase {p.phase_id} depends on non-existent phase {dep}"
+
+
+# ---------------------------------------------------------------------------
+# Assay Troubleshooting — query classification & phase routing
+# ---------------------------------------------------------------------------
+
+
+class TestAssayTroubleshootingQueryClassification:
+    def test_signal_noise_keywords(self):
+        cats = _classify_query("Why is my ELISA showing high background in serum?")
+        assert "signal_noise" in cats
+
+    def test_variability_keywords(self):
+        cats = _classify_query("Diagnose inconsistent IC50 values across plate replicates")
+        assert "variability" in cats
+
+    def test_expression_keywords(self):
+        cats = _classify_query("Troubleshoot low transfection efficiency in HEK293 cells")
+        assert "expression" in cats
+
+    def test_protocol_keywords(self):
+        cats = _classify_query("My western blot blocking step is not working with this antibody")
+        assert "protocol" in cats
+
+    def test_multiple_categories(self):
+        cats = _classify_query(
+            "High background noise and inconsistent replicates in my ELISA"
+        )
+        assert "signal_noise" in cats
+        assert "variability" in cats
+
+    def test_general_fallback(self):
+        cats = _classify_query("Something is wrong with my experiment")
+        assert "general" in cats
+
+    def test_categories_ordered_by_relevance(self):
+        cats = _classify_query(
+            "High background signal noise artifact in my assay with some variability"
+        )
+        # signal_noise has more keyword hits than variability
+        assert cats.index("signal_noise") < cats.index("variability")
+
+
+class TestAssayTroubleshootingPhaseRouting:
+    def test_signal_noise_query_gets_snr_phase(self, divisions):
+        sl = create_sublab("Assay Troubleshooting", divisions=divisions)
+        phases = sl._build_phases("Why is my ELISA showing high background?")
+        phase_names = [p.name for p in phases]
+        assert any("Signal-to-Noise" in n for n in phase_names)
+
+    def test_variability_query_gets_qc_phase(self, divisions):
+        sl = create_sublab("Assay Troubleshooting", divisions=divisions)
+        phases = sl._build_phases("Inconsistent replicates across my plate")
+        phase_names = [p.name for p in phases]
+        assert any("Variability" in n or "QC" in n for n in phase_names)
+
+    def test_expression_query_gets_expression_phase(self, divisions):
+        sl = create_sublab("Assay Troubleshooting", divisions=divisions)
+        phases = sl._build_phases("Low transfection efficiency in HEK293")
+        phase_names = [p.name for p in phases]
+        assert any("Expression" in n for n in phase_names)
+
+    def test_general_query_gets_all_phases(self, divisions):
+        sl = create_sublab("Assay Troubleshooting", divisions=divisions)
+        phases = sl._build_phases("Something is wrong with my experiment")
+        # general fallback should include performance analysis + expression + solution
+        assert len(phases) >= 4
+
+    def test_always_starts_with_characterization(self, divisions):
+        sl = create_sublab("Assay Troubleshooting", divisions=divisions)
+        for query in [
+            "High background in ELISA",
+            "Low transfection efficiency",
+            "Inconsistent replicates",
+            "Something is wrong",
+        ]:
+            phases = sl._build_phases(query)
+            assert phases[0].name == "Problem Characterization & Data Review"
+
+    def test_always_ends_with_solution_proposal(self, divisions):
+        sl = create_sublab("Assay Troubleshooting", divisions=divisions)
+        for query in [
+            "High background in ELISA",
+            "Low transfection efficiency",
+            "Inconsistent replicates",
+        ]:
+            phases = sl._build_phases(query)
+            assert "Solution" in phases[-1].name
+
+    def test_solution_phase_depends_on_all_prior(self, divisions):
+        sl = create_sublab("Assay Troubleshooting", divisions=divisions)
+        phases = sl._build_phases("High background noise in ELISA")
+        solution_phase = phases[-1]
+        prior_ids = [p.phase_id for p in phases[:-1]]
+        assert set(prior_ids).issubset(set(solution_phase.dependencies))
+
+    def test_phase_ids_are_sequential(self, divisions):
+        sl = create_sublab("Assay Troubleshooting", divisions=divisions)
+        phases = sl._build_phases("test query")
+        ids = [p.phase_id for p in phases]
+        assert ids == list(range(1, len(phases) + 1))
+
+    def test_dependencies_reference_valid_phases(self, divisions):
+        sl = create_sublab("Assay Troubleshooting", divisions=divisions)
+        for query in AssayTroubleshootingSublab.examples:
+            phases = sl._build_phases(query)
+            phase_ids = {p.phase_id for p in phases}
+            for p in phases:
+                for dep in p.dependencies:
+                    assert dep in phase_ids, (
+                        f"Phase {p.phase_id} depends on non-existent {dep} "
+                        f"for query: {query}"
+                    )
 
 
 # ---------------------------------------------------------------------------
