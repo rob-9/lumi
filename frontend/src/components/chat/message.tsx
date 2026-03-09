@@ -4,7 +4,6 @@ import { HitlCard } from "./hitl-card";
 import { IntegrationCard } from "./integration-card";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { FlaskConical } from "lucide-react";
 
 interface Props {
   message: Message;
@@ -32,11 +31,8 @@ export function ChatMessage({ message, index = 0 }: Props) {
       className="msg-assistant animate-slide-up"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <div className="msg-assistant-avatar">
-        <FlaskConical size={14} />
-      </div>
-
       <div className="msg-assistant-content space-y-3">
+        <span className="text-xs font-semibold" style={{ color: "var(--accent)" }}>Lumi</span>
         {message.agent_traces.length > 0 && (
           <AgentActivityGroup traces={message.agent_traces} />
         )}

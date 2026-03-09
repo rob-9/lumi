@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { FlaskConical, User, Hash, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { FlaskConical, User, Hash, CheckCircle2, XCircle, RotateCcw, ArrowLeft } from "lucide-react";
 import clsx from "clsx";
 
 interface ReviewMessage {
@@ -61,13 +61,13 @@ const CONVERSATIONS: Record<string, { channel: string; messages: ReviewMessage[]
         role: "agent",
         name: "Lumi Agent",
         title: "AI Scientist",
-        text: "Rosetta modeling suggests a PEG₈-linked talazoparib warhead on the Fab arm could maintain PARP-trapping activity (predicted IC₅₀ shift: 3.2x vs free talazoparib). The anti-PD-L1 arm uses the atezolizumab CDR scaffold. DMS analysis shows linker orientation is critical — 4/12 configurations maintain >50% trapping efficiency. CMC concern: the talazoparib-linker conjugate shows 15% aggregation at 40°C/4wk in accelerated stability.",
+        text: "Rosetta modeling suggests a PEG\u2088-linked talazoparib warhead on the Fab arm could maintain PARP-trapping activity (predicted IC\u2085\u2080 shift: 3.2x vs free talazoparib). The anti-PD-L1 arm uses the atezolizumab CDR scaffold. DMS analysis shows linker orientation is critical — 4/12 configurations maintain >50% trapping efficiency. CMC concern: the talazoparib-linker conjugate shows 15% aggregation at 40\u00b0C/4wk in accelerated stability.",
       },
       {
         role: "expert",
         name: "Dr. James Rodriguez",
         title: "Antibody Engineering Lead",
-        text: "The 3x IC₅₀ shift is concerning but not disqualifying for proof-of-concept. I'll approve this for in silico exploration only — do NOT include as a clinical recommendation. The CMC challenges alone (dual-payload stability, 15% aggregation, conjugation-site heterogeneity) make this 3-5 years from IND-enabling studies at best. Flag clearly as exploratory and focus near-term efforts on the conventional olaparib + atezolizumab combination.",
+        text: "The 3x IC\u2085\u2080 shift is concerning but not disqualifying for proof-of-concept. I'll approve this for in silico exploration only — do NOT include as a clinical recommendation. The CMC challenges alone (dual-payload stability, 15% aggregation, conjugation-site heterogeneity) make this 3-5 years from IND-enabling studies at best. Flag clearly as exploratory and focus near-term efforts on the conventional olaparib + atezolizumab combination.",
       },
     ],
   },
@@ -139,7 +139,6 @@ function ReviewContent() {
         setVisibleMessages((prev) => [...prev, mockMessages[i]]);
         await new Promise((r) => setTimeout(r, 500));
       }
-      // Auto-resolve after conversation plays
       if (!cancelled) {
         await new Promise((r) => setTimeout(r, 1000));
         if (!cancelled) setResolved("approved");
@@ -155,39 +154,46 @@ function ReviewContent() {
   }, [visibleMessages, typing, resolved]);
 
   return (
-    <div className="flex h-screen flex-col" style={{ fontFamily: "'Lato', 'Segoe UI', sans-serif" }}>
+    <div className="flex h-screen flex-col bg-[var(--bg)]">
       {/* Header bar */}
-      <header className="shrink-0 flex items-center gap-3 border-b border-gray-200 bg-white px-5 py-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
-          <FlaskConical size={16} />
+      <header className="shrink-0 flex items-center gap-3 border-b border-[var(--border)] bg-[var(--bg-card)] px-5 py-3">
+        <button
+          onClick={() => window.history.back()}
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text)]"
+        >
+          <ArrowLeft size={16} />
+        </button>
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent-light)] text-[var(--accent)]">
+          <FlaskConical size={14} />
         </div>
-        <div className="flex items-center gap-2">
-          <Hash size={14} className="text-gray-400" />
-          <span className="text-sm font-bold text-gray-900">{channelName}</span>
+        <div className="flex items-center gap-1.5">
+          <Hash size={13} className="text-[var(--text-muted)]" />
+          <span className="text-sm font-semibold text-[var(--text)]">{channelName}</span>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <span className="text-[10px] uppercase tracking-wider font-medium text-[var(--text-muted)]">Expert Review</span>
+        <div className="ml-auto flex items-center gap-2.5">
           <span
             className={clsx(
-              "rounded-full px-2.5 py-1 text-xs font-semibold text-white",
-              confidencePct >= 70 ? "bg-green-500" : confidencePct >= 50 ? "bg-yellow-500" : "bg-orange-500"
+              "rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white",
+              confidencePct >= 70 ? "bg-[var(--green)]" : confidencePct >= 50 ? "bg-[var(--orange)]" : "bg-[var(--orange)]"
             )}
           >
             {confidencePct}% confidence
           </span>
-          <span className="text-xs text-gray-500 font-mono">{findingId}</span>
+          <span className="text-[10px] text-[var(--text-muted)] font-mono">{findingId}</span>
         </div>
       </header>
 
       {/* Finding summary */}
-      <div className="shrink-0 border-b border-gray-200 bg-gray-50 px-5 py-3">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded bg-orange-100 text-orange-600">
+      <div className="shrink-0 border-b border-[var(--border)] bg-[var(--orange-bg)] px-5 py-3">
+        <div className="flex items-start gap-3 max-w-3xl mx-auto">
+          <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[var(--orange)] bg-opacity-20 text-[var(--orange)]">
             <span className="text-xs font-bold">!</span>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 leading-snug">{finding}</p>
-            <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
-              <span>Agent: <span className="font-mono text-gray-700">{agent}</span></span>
+            <p className="text-sm font-medium text-[var(--text)] leading-snug">{finding}</p>
+            <div className="mt-1.5 flex items-center gap-3 text-[11px] text-[var(--text-muted)]">
+              <span>Agent: <span className="font-mono text-[var(--text-secondary)]">{agent}</span></span>
               {reason && <span className="truncate">{reason}</span>}
             </div>
           </div>
@@ -195,49 +201,50 @@ function ReviewContent() {
       </div>
 
       {/* Message thread */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-white px-5 py-4">
-        <div className="max-w-2xl mx-auto space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="max-w-3xl mx-auto space-y-5">
           {visibleMessages.map((msg, i) => (
             <div
               key={i}
-              className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300"
+              className="flex items-start gap-3 animate-slide-up"
+              style={{ animationDelay: "0ms" }}
             >
               {/* Avatar */}
               <div
                 className={clsx(
-                  "mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white",
-                  msg.role === "agent" ? "bg-indigo-600" : "bg-emerald-600"
+                  "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white",
+                  msg.role === "agent" ? "bg-[var(--accent)]" : "bg-emerald-600"
                 )}
               >
-                {msg.role === "agent" ? <FlaskConical size={16} /> : <User size={16} />}
+                {msg.role === "agent" ? <FlaskConical size={14} /> : <User size={14} />}
               </div>
 
               {/* Message body */}
-              <div className="min-w-0 flex-1 pt-0.5">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-bold text-gray-900">{msg.name}</span>
-                  <span className="text-xs text-gray-400">{msg.title}</span>
-                  <span className="text-xs text-gray-300">
+                  <span className="text-sm font-semibold text-[var(--text)]">{msg.name}</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">{msg.title}</span>
+                  <span className="text-[10px] text-[var(--border-hover)]">
                     {new Date(Date.now() - (mockMessages.length - i) * 60000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
-                <p className="mt-1 text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">{msg.text}</p>
+                <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)] whitespace-pre-wrap">{msg.text}</p>
               </div>
             </div>
           ))}
 
           {/* Typing indicator */}
           {typing && !resolved && (
-            <div className="flex items-start gap-3">
-              <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-200">
+            <div className="flex items-start gap-3 animate-fade-in">
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--bg-hover)]">
                 <span className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--text-muted)] typing-dot" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--text-muted)] typing-dot" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--text-muted)] typing-dot" />
                 </span>
               </div>
-              <div className="pt-3">
-                <span className="text-xs text-gray-400">typing...</span>
+              <div className="pt-2.5">
+                <span className="text-[11px] text-[var(--text-muted)]">typing...</span>
               </div>
             </div>
           )}
@@ -246,26 +253,26 @@ function ReviewContent() {
           {resolved && (
             <div
               className={clsx(
-                "rounded-lg border px-4 py-3 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300",
+                "rounded-lg border px-4 py-3 flex items-center gap-3 animate-scale-in",
                 resolved === "approved"
-                  ? "border-green-200 bg-green-50"
+                  ? "border-[var(--green)] bg-[var(--green-bg)]"
                   : resolved === "revised"
-                    ? "border-yellow-200 bg-yellow-50"
-                    : "border-red-200 bg-red-50"
+                    ? "border-[var(--orange)] bg-[var(--orange-bg)]"
+                    : "border-[var(--red)] bg-[var(--red-bg)]"
               )}
             >
               {resolved === "approved" ? (
-                <CheckCircle2 size={18} className="text-green-600 shrink-0" />
+                <CheckCircle2 size={16} className="text-[var(--green)] shrink-0" />
               ) : resolved === "rejected" ? (
-                <XCircle size={18} className="text-red-600 shrink-0" />
+                <XCircle size={16} className="text-[var(--red)] shrink-0" />
               ) : (
-                <RotateCcw size={18} className="text-yellow-600 shrink-0" />
+                <RotateCcw size={16} className="text-[var(--orange)] shrink-0" />
               )}
               <div>
-                <p className="text-sm font-semibold text-gray-900 capitalize">
+                <p className="text-sm font-semibold text-[var(--text)] capitalize">
                   Finding {resolved}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-[var(--text-muted)]">
                   {resolved === "approved"
                     ? "Include with explicit uncertainty label. Track Phase III for definitive evidence."
                     : resolved === "revised"
@@ -279,56 +286,56 @@ function ReviewContent() {
       </div>
 
       {/* Action buttons */}
-      <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-5 py-3">
-        <div className="max-w-2xl mx-auto flex items-center gap-3">
+      <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-card)] px-5 py-3">
+        <div className="max-w-3xl mx-auto flex items-center gap-3">
           <button
             onClick={() => submitDecision("approved")}
             disabled={resolved !== null || submitting}
             className={clsx(
-              "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+              "flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all",
               resolved === "approved"
-                ? "bg-green-600 text-white"
+                ? "bg-[var(--green)] text-white"
                 : resolved !== null
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-green-600 text-white hover:bg-green-700 active:scale-95"
+                  ? "bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-not-allowed"
+                  : "bg-[var(--green)] text-white hover:brightness-110 active:scale-95"
             )}
           >
-            <CheckCircle2 size={15} />
+            <CheckCircle2 size={14} />
             Approve with caveat
           </button>
           <button
             onClick={() => submitDecision("revised")}
             disabled={resolved !== null || submitting}
             className={clsx(
-              "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+              "flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all",
               resolved === "revised"
-                ? "bg-yellow-500 text-white"
+                ? "bg-[var(--orange)] text-white"
                 : resolved !== null
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 active:scale-95"
+                  ? "bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-not-allowed"
+                  : "border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] active:scale-95"
             )}
           >
-            <RotateCcw size={15} />
+            <RotateCcw size={14} />
             Revise
           </button>
           <button
             onClick={() => submitDecision("rejected")}
             disabled={resolved !== null || submitting}
             className={clsx(
-              "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+              "flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all",
               resolved === "rejected"
-                ? "bg-red-600 text-white"
+                ? "bg-[var(--red)] text-white"
                 : resolved !== null
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 active:scale-95"
+                  ? "bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-not-allowed"
+                  : "border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] active:scale-95"
             )}
           >
-            <XCircle size={15} />
+            <XCircle size={14} />
             Reject
           </button>
           {resolved && (
-            <span className="ml-auto text-xs text-gray-400">
-              Decision recorded. You can close this tab.
+            <span className="ml-auto text-[11px] text-[var(--text-muted)]">
+              Decision recorded.
             </span>
           )}
         </div>
@@ -341,8 +348,15 @@ export default function ReviewPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-screen items-center justify-center">
-          <span className="text-sm text-gray-500">Loading review...</span>
+        <div className="flex h-screen items-center justify-center bg-[var(--bg)]">
+          <div className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
+            <span className="flex gap-1">
+              <span className="h-2 w-2 rounded-full bg-[var(--accent)] typing-dot" />
+              <span className="h-2 w-2 rounded-full bg-[var(--accent)] typing-dot" />
+              <span className="h-2 w-2 rounded-full bg-[var(--accent)] typing-dot" />
+            </span>
+            Loading review...
+          </div>
         </div>
       }
     >
